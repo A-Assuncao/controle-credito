@@ -10,6 +10,11 @@ out/
 .turbo/
 .next/
 *.tsbuildinfo
+# Test output artifacts (vitest/tsc emitted files in test dirs)
+**/__tests__/*.d.ts
+**/__tests__/*.d.ts.map
+**/__tests__/*.js
+**/__tests__/*.js.map
 
 # Test outputs
 coverage/
