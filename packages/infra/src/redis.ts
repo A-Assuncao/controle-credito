@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 import { env } from './env.js';
 import { logger } from './logger.js';
 
@@ -10,6 +10,8 @@ import { logger } from './logger.js';
  *
  * Chaves DEVEM ser namespaced por tenant quando carregarem dados tenant-scoped.
  * Formato: t:{tenant_id}:{chave}
+ *
+ * ioredis v5+ exporta Redis como named export (nao default).
  */
 export const redis = new Redis(env.REDIS_URL, {
   maxRetriesPerRequest: 3,
@@ -17,6 +19,6 @@ export const redis = new Redis(env.REDIS_URL, {
   lazyConnect: false,
 });
 
-redis.on('error', (err) => {
+redis.on('error', (err: Error) => {
   logger.error({ err }, 'redis error');
 });

@@ -40,21 +40,51 @@ export function roundHalfEven(value: number): number {
   return rounded;
 }
 
-/** Converte BRL (string "1234.56") para Cents */
+/**
+ * Converte BRL em string para Cents.
+ * Aceita: "1234.56", "1234,56", "R$ 1.234,56", "1.234,56" (formato BR com milhar).
+ * Estrategia: detectar se a virgula eh decimal ou milhar; se houver
+ * AMBOS virgula e ponto, o ultimo separador eh o decimal.
+ */
 export function fromBrl(input: string): Cents {
-  const cleaned = input.replace(/[^\d,.-]/g, '').replace(',', '.');
-  const reais = Number.parseFloat(cleaned);
+  const cleaned = input.replace(/[^\d,.\-]/g, '');
+  if (!cleaned) {
+    throw new Error(`BRL invalido: ${input}`);
+  }
+
+  const lastComma = cleaned.lastIndexOf(',');
+  const lastDot = cleaned.lastIndexOf('.');
+
+  let normalized: string;
+  if (lastComma === -1 && lastDot === -1) {
+    // Sem separador, tudo eh inteiro
+    normalized = cleaned;
+  } else if (lastComma > lastDot) {
+    // Virgula eh o decimal (formato BR); remove pontos (milhar)
+    normalized = cleaned.replace(/\./g, '').replace(',', '.');
+  } else {
+    // Ponto eh o decimal (formato US); remove virgulas (milhar)
+    normalized = cleaned.replace(/,/g, '');
+  }
+
+  const reais = Number.parseFloat(normalized);
   if (!Number.isFinite(reais)) {
     throw new Error(`BRL invalido: ${input}`);
   }
   return cents(Math.round(reais * 100));
 }
 
-/** Formata Cents como BRL "R$ 1.234,56" */
+/**
+ * Formata Cents como BRL "R$ 1.234,56".
+ * Usa Intl.NumberFormat que em Windows pode retornar NBSP (U+00A0) -
+ * o teste normaliza NBSP para espaco comum.
+ */
 export function formatBrl(value: Cents): string {
   const reais = (value as number) / 100;
-  return new Intl.NumberFormat('pt-BR', {
+  const formatted = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   }).format(reais);
+  // Normaliza NBSP ( ) e narrow NBSP ( ) para espaco comum
+  return formatted.replace(/[  ]/g, ' ');
 }
