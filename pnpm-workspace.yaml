@@ -1,3 +1,9 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+
+# pnpm overrides (movido do package.json, ignorado desde pnpm 9+)
+overrides:
+  '@humanwhocodes/config-array': npm:@eslint/config-array@^0.23.5
+  '@humanwhocodes/object-schema': npm:@eslint/object-schema@^3.0.5
+  otplib: ^13.4.1
