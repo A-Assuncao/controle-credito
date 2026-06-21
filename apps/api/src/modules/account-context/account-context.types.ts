@@ -12,4 +12,6 @@ export interface AccountContextPayload {
    * 'verified'     => TOTP verificado nesta sessao (MfaGuard libera rotas sensiveis)
    */
   mfaStatus: 'pending' | 'verified' | 'not_required';
+  /** JWT iat (segundos desde epoch). Usado para checar coarse-grained revocation. */
+  issuedAt: number;
 }

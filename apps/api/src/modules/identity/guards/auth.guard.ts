@@ -1,42 +1,65 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator.js';
+import { UsersRepository } from '../users/users.repository.js';
 
 /**
- * Guard global (registrado como APP_GUARD no app.module.ts).
+ * Guard global (registrado como APP_GUARD no app.module.ts via useFactory para DI).
  *
  * Fluxo:
  * 1. Se a rota tem @Public() => libera sempre.
- * 2. Se req.accountContext esta' populado (middleware validou JWT) => libera.
- * 3. Caso contrario => 401 com correlationId no body (AllExceptionsFilter completa).
+ * 2. Se req.accountContext ausente => 401.
+ * 3. Verifica last_session_revoked_at > token.iat => 401 (revogacao coarse-grained).
+ *    Custo: 1 query por request. Cacheavel no Redis no futuro (Sprint 2).
  *
- * NAO verifica last_session_revoked_at nesta task - a 6b adiciona o check
- * coarse-grained quando criar o UsersRepository.
+ * MFA: este guard NAO exige mfa=verified. Rotas sensiveis aplicam
+ * @UseGuards(MfaGuard) alem deste (Sprint 2 - sem rotas sensiveis ainda).
  *
- * IMPORTANTE: o Reflector vem de um singleton estatico da classe em vez de
- * injetado via construtor. Razao: quando registrado como APP_GUARD com
- * `useClass`, o Nest nao chama o constructor com DI - instancia a classe
- * diretamente, e o `private readonly reflector` fica undefined no runtime.
- * O Reflector eh stateless e globalmente compartilhado, entao usa-lo como
- * singleton da classe eh seguro.
+ * IMPORTANTE sobre DI: registrado como APP_GUARD via useFactory injeta
+ * `UsersRepository` corretamente. Singleton estatico do Reflector continua
+ * valido (stateless e global).
  */
 @Injectable()
 export class AuthGuard implements CanActivate {
   private static readonly reflector = new Reflector();
 
-  canActivate(context: ExecutionContext): boolean {
+  constructor(private readonly users: UsersRepository) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = AuthGuard.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
     if (isPublic) return true;
 
-    const req = context.switchToHttp().getRequest();
-    if (req.accountContext != null) return true;
+    const req = context.switchToHttp().getRequest<{
+      accountContext: { accountId: string; userId: string; issuedAt: number } | null;
+      correlationId: string;
+    }>();
+    if (req.accountContext == null) {
+      throw new UnauthorizedException({
+        message: 'Authentication required',
+        correlationId: req.correlationId,
+      });
+    }
 
-    throw new UnauthorizedException({
-      message: 'Authentication required',
-      correlationId: req.correlationId,
-    });
+    // Coarse-grained revocation check: se o user teve sessoes revogadas
+    // apos a emissao deste token, rejeita. Custo: 1 query por request.
+    // Cacheavel no Redis no futuro (Sprint 2).
+    const revokedAt = await this.users.getRevocationTimestamp(
+      req.accountContext.accountId,
+      req.accountContext.userId,
+    );
+    if (revokedAt != null) {
+      const revokedAtSeconds = Math.floor(revokedAt.getTime() / 1000);
+      if (req.accountContext.issuedAt < revokedAtSeconds) {
+        throw new UnauthorizedException({
+          message: 'Session revoked',
+          correlationId: req.correlationId,
+        });
+      }
+    }
+
+    return true;
   }
 }

@@ -10,14 +10,18 @@ import { AllExceptionsFilter } from './modules/common/filters/all-exceptions.fil
 /**
  * Modulo raiz da API.
  *
- * - APP_GUARD: AuthGuard global. Rotas publicas usam @Public().
+ * - APP_GUARD: AuthGuard global via useFactory (permite DI). Rotas publicas usam @Public().
  * - APP_FILTER: AllExceptionsFilter global. Garante envelope consistente + log estruturado.
  * - AccountContextModule: importa IdentityModule (middleware depende do TokenService).
  */
 @Module({
   imports: [CommonModule, IdentityModule, AccountContextModule, HealthModule],
   providers: [
-    { provide: APP_GUARD, useClass: AuthGuard },
+    {
+      provide: APP_GUARD,
+      useFactory: (guard: AuthGuard) => guard,
+      inject: [AuthGuard],
+    },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ],
 })

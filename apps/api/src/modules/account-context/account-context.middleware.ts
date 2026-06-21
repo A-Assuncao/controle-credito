@@ -49,8 +49,8 @@ export class AccountContextMiddleware implements NestMiddleware {
     }
 
     try {
-      const payload = await this.tokenService.verify(token);
-      req.accountContext = this.tokenService.toAccountContext(payload);
+      const { payload, iat } = await this.tokenService.verify(token);
+      req.accountContext = this.tokenService.toAccountContext(payload, iat);
     } catch (err) {
       const reason = this.classifyError(err);
       logger.info(

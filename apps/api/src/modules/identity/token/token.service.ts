@@ -44,17 +44,18 @@ export class TokenService {
   }
 
   /**
-   * Verifica e retorna os claims. Lanca `JOSEError` em qualquer falha
+   * Verifica e retorna os claims + iat. Lanca `JOSEError` em qualquer falha
    * (expirado, signature invalida, issuer/audience incorretos, malformado).
    * O caller (middleware) mapeia para 401.
    */
-  async verify(token: string): Promise<AccessTokenPayload> {
+  async verify(token: string): Promise<{ payload: AccessTokenPayload; iat: number }> {
     const { payload } = await jwtVerify(token, this.secret, {
       algorithms: ['HS256'],
       issuer: this.issuer,
       audience: this.audience,
     });
-    return this.normalize(payload);
+    const iat = typeof payload.iat === 'number' ? payload.iat : Math.floor(Date.now() / 1000);
+    return { payload: this.normalize(payload), iat };
   }
 
   /**
@@ -62,11 +63,14 @@ export class TokenService {
    * os services/guards consomem. Centralizar a renomeacao evita divergencia
    * entre `sub`/`account_id`/`mfa` e os campos do request.
    */
-  toAccountContext(payload: AccessTokenPayload): AccountContextPayload {
+  toAccountContext(payload: AccessTokenPayload, issuedAt?: number): AccountContextPayload {
     return {
       accountId: payload.account_id,
       userId: payload.sub,
       mfaStatus: payload.mfa ?? 'not_required',
+      // jose inclui `iat` no payload, mas o tipo JWTPayload nao o expoe
+      // explicitamente - usamos o parametro se veio, senao now() (1s drift aceitavel).
+      issuedAt: issuedAt ?? Math.floor(Date.now() / 1000),
     };
   }
 

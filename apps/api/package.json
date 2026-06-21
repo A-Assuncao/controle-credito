@@ -2,10 +2,9 @@
   "name": "@controle-credito/api",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "main": "./dist/main.js",
   "scripts": {
-    "dev": "tsx watch --env-file=../../.env src/main.ts",
+    "dev": "tsx watch --tsconfig=tsconfig.dev.json --env-file=../../.env src/main.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
     "lint": "eslint src --max-warnings 0",
