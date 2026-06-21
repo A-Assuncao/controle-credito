@@ -1,0 +1,30 @@
+{
+  "name": "@controle-credito/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'no tests' && exit 0",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@controle-credito/contracts": "workspace:*",
+    "@controle-credito/infra": "workspace:*",
+    "@controle-credito/ui": "workspace:*",
+    "next": "^15.0.0",
+    "next-auth": "5.0.0-beta.20",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.2",
+    "@types/node": "^22.7.4",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.6.2"
+  }
+}
