@@ -11,6 +11,13 @@ const EnvSchema = z.object({
 
   DATABASE_URL: z.string().min(10),
   DATABASE_URL_TEST: z.string().min(10).optional(),
+  /**
+   * Conexao usada por withSystemContext. Aponta para um role com BYPASSRLS
+   * (recomendado: `app_system`). Mantemos separada da DATABASE_URL para que
+   * o caminho tenant (withAccountContext) continue na role sem privilegios
+   * de bypass.
+   */
+  DATABASE_URL_SYSTEM: z.string().min(10).optional(),
   REDIS_URL: z.string().min(10),
 
   NEXTAUTH_SECRET: z.string().min(32, 'NEXTAUTH_SECRET precisa ter >= 32 chars'),

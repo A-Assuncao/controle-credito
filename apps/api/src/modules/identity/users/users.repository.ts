@@ -148,4 +148,15 @@ export class UsersRepository {
       );
     });
   }
+
+  /**
+   * Atualiza apenas campos editaveis do user (full_name por enquanto).
+   * NAO expoe password_hash, email, mfa_enabled, status - campos sensiveis
+   * tem fluxos proprios (mfa endpoints, password reset, etc).
+   */
+  async updateProfile(accountId: string, userId: string, fullName: string): Promise<void> {
+    await withAccountContext(accountId, async (client) => {
+      await client.query(`UPDATE users SET full_name = $2 WHERE id = $1`, [userId, fullName]);
+    });
+  }
 }

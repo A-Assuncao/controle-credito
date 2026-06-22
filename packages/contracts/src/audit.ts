@@ -26,9 +26,9 @@ export const AuditLogQuerySchema = z.object({
   from: z.string().datetime().optional(),
   /** ISO datetime upper bound */
   to: z.string().datetime().optional(),
-  /** Page size, default 50, max 200 */
-  limit: z.number().int().min(1).max(200).default(50),
-  /** Offset */
-  offset: z.number().int().min(0).default(0),
+  /** Page size, default 50, max 200. Query string vem como string - coerce. */
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  /** Offset. Query string vem como string - coerce. */
+  offset: z.coerce.number().int().min(0).default(0),
 });
 export type AuditLogQuery = z.infer<typeof AuditLogQuerySchema>;

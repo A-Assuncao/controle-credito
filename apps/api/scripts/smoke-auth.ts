@@ -1,19 +1,16 @@
 /**
  * Script de smoke manual do pipeline de auth.
  *
- * Emite um JWT de teste via TokenService e mostra:
- *   - o token bruto (para copiar)
- *   - um curl exemplo para Authorization: Bearer
- *
  * Uso:
- *   pnpm exec tsx --env-file=../../.env scripts/smoke-auth.ts
+ *   pnpm exec tsx --env-file=../../.env scripts/smoke-auth.ts [accountId] [userId]
+ *   Se accountId/userId nao fornecidos, gera UUIDs dummy.
  */
 import { TokenService } from '../src/modules/identity/token/token.service.js';
 
 async function main(): Promise<void> {
   const t = new TokenService();
-  const accountId = '22222222-2222-2222-2222-222222222222';
-  const userId = '11111111-1111-1111-1111-111111111111';
+  const accountId = process.argv[2] ?? '22222222-2222-2222-2222-222222222222';
+  const userId = process.argv[3] ?? '11111111-1111-1111-1111-111111111111';
 
   const jwt = await t.sign({ sub: userId, account_id: accountId, mfa: 'not_required' });
   console.log('--- TOKEN ---');

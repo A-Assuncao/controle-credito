@@ -35,14 +35,3 @@ export const PasswordResetConfirmSchema = z.object({
   newPassword: z.string().min(8).max(200),
 });
 export type PasswordResetConfirm = z.infer<typeof PasswordResetConfirmSchema>;
-
-export const MeResponseSchema = z.object({
-  id: z.string().uuid(),
-  accountId: z.string().uuid(),
-  email: z.string().email(),
-  fullName: z.string(),
-  mfaEnabled: z.boolean(),
-  status: z.enum(['active', 'suspended', 'canceled']),
-  lastLoginAt: z.string().datetime().nullable(),
-});
-export type MeResponse = z.infer<typeof MeResponseSchema>;
