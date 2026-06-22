@@ -7,10 +7,10 @@
     "dev": "tsx watch --tsconfig=tsconfig.dev.json --env-file=../../.env src/main.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
-    "lint": "eslint src --max-warnings 0",
+    "lint": "eslint src test --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "echo 'e2e placeholder' && exit 0"
+    "test:e2e": "node --env-file=../../.env scripts/run-e2e.js"
   },
   "dependencies": {
     "@controle-credito/contracts": "workspace:*",
@@ -37,6 +37,7 @@
     "supertest": "^7.0.0",
     "tsx": "^4.19.2",
     "typescript": "^5.6.2",
-    "vitest": "^2.1.2"
+    "unplugin-swc": "^1.5.9",
+    "vitest": "^3.2.4"
   }
 }

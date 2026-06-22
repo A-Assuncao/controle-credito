@@ -51,8 +51,10 @@ export class AuthGuard implements CanActivate {
       req.accountContext.userId,
     );
     if (revokedAt != null) {
-      const revokedAtSeconds = Math.floor(revokedAt.getTime() / 1000);
-      if (req.accountContext.issuedAt < revokedAtSeconds) {
+      // Em milissegundos para comparar com iat (que jose emite em segundos)
+      const revokedAtMs = revokedAt.getTime();
+      const issuedAtMs = req.accountContext.issuedAt * 1000;
+      if (issuedAtMs < revokedAtMs) {
         throw new UnauthorizedException({
           message: 'Session revoked',
           correlationId: req.correlationId,
