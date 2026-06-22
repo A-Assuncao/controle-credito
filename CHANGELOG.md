@@ -8,12 +8,79 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 ## [Nao liberado]
 
 ### Em andamento
-- **Sprint 1 / EXE-001 — Fundação conta/IAM/auditoria** (autorizada em 2026-06-21). Ver `docs/sprint-1-plan.md` e `docs/adr/0024-auth-nextauth-substitui-kratos.md`.
+- **Sprint 2 / EXE-002 — Dominio financeiro** (a iniciar apos go/no-go da Sprint 1).
 
 ### Pendente
 - Decisoes juridicas sobre LGPD, transferencia internacional, modulo PREMIUM e provedor LLM.
 - DPIA para PREMIUM e dados fora do BR (Sprint 1.5 / 2).
 - Subprocessadores formais e revisão jurídica final do modo nominal no PREMIUM.
+
+---
+
+## [1.0.0-foundation] - 2026-06-21
+
+Sprint 1 / EXE-001 concluida. Documento `docs/sprint-1-done.md` tem o DoD item-por-item (28/37 entregues, 4 parciais, 5 diferidos para Sprint 2).
+
+### Adicionado
+
+**Infraestrutura**
+- Monorepo pnpm + Turborepo com 7 workspaces (apps/api, apps/web, packages/{contracts,domain,infra,ui}).
+- `apps/api` (NestJS 10): módulos `identity`, `accounts`, `common`, `health`, `observability`, `account-context`.
+- `apps/web` (Next.js 15 App Router + NextAuth v5 beta.20): páginas `/login`, `/dashboard`, `/` (redirect), `/api/auth/[...nextauth]`, middleware de proteção de rotas.
+- `packages/contracts`: schemas Zod compartilhados (`identity`, `account`, `audit`).
+- `packages/infra`: env validation (zod), pg pool + `withAccountContext`/`withSystemContext`, redis client, pino logger com redação de PII.
+- CI GitHub Actions em `.github/workflows/ci.yml` (lint + typecheck + test + setup test DB com GRANTs).
+
+**Banco & migrações**
+- 3 migrations idempotentes: `accounts` (raiz), `users` (FK accounts, RLS FORCE), `audit_log` (append-only via triggers).
+- Runner `pnpm db:migrate` que registra em `__migrations__`.
+- **Hardening de RLS** (descoberta na task 6c): role `app_system` (BYPASSRLS, NOSUPERUSER) em pool separado, evitando bypass via SUPERUSER.
+
+**Auth & Sessão**
+- `argon2id` (OWASP 2024: 19MiB memory, 2 iter, 1 paralelismo).
+- JWT HS256 (jose): access 15min + refresh Redis 30d com hash SHA-256.
+- `POST /auth/login`, `/refresh`, `/logout` (com single-session).
+- `POST /auth/mfa/setup` (otplib + AES-256-GCM no secret), `/verify`, `/disable`.
+- `last_session_revoked_at` para revogação coarse-grained (AuthGuard checa `iat < revoked_at`).
+- Refresh automático transparente (jwt callback quando faltar <2min para expirar).
+- Decorators `@CurrentAccount()`, `@CurrentUser()`, `@CorrelationId()`, `@Public()`.
+
+**Endpoints**
+- `GET/PATCH /accounts/me` (full_name, settings — schema zod strict).
+- `GET /accounts/me/audit` (filtros: action, from, to, limit, offset).
+- `GET /health` (SELECT 1 + Redis PING, 200/503).
+- `AuditLoggerInterceptor` global grava toda mutação automaticamente.
+
+**Observabilidade**
+- Pino logger com redação (password, token, email, cpf, phone, secret, mfaSecret, ...).
+- OpenTelemetry NodeSDK com auto-instrumentation (HTTP, Express, pg, ioredis).
+- OTLP/HTTP exporter (configurável via `OTEL_EXPORTER_OTLP_ENDPOINT`).
+- `HttpLoggerMiddleware` loga cada request (method, path, status, durationMs, correlationId, userId, accountId).
+
+**Suite de testes**
+- 5 unit tests do AuthGuard (vitest).
+- 15 e2e tests via supertest (login, refresh, logout, MFA setup, accounts CRUD, audit, cross-account isolation) — 100% verde.
+- Config separada com `unplugin-swc` para decorator metadata em ESM.
+
+### Changed
+- **ADR-0024**: NextAuth v5 + TOTP próprio substitui Ory Kratos + Hydra (decisão registrada no plano).
+- `pnpm db:check-rls` agora roda no CI com warning se o role `app` virar SUPERUSER (defesa contra regressão).
+- `packages/{contracts,domain,infra}` agora têm `main: "./dist/index.js"` (Node ESM precisa de `.js` no filesystem).
+
+### Diferido para Sprint 2 (EXE-002)
+- MfaGuard em rotas sensíveis (a estrutura está pronta — só aplicar).
+- Banner MFA em apps/web.
+- Recuperação de senha (e-mail + SMS) com providers.
+- Playwright e2e para apps/web.
+- SAST no CI (codeql/snyk).
+- Sentry para captura de 500 + scrubbing de PII.
+- Preview deploy por PR (Neon branch + Vercel/Render).
+- TTL de sessão 12h (atualmente 30d — mais seguro por default).
+- Mobile-first testing (375x812).
+
+### Notes
+- Veja `docs/sprint-1-done.md` para o DoD item-por-item.
+- Memórias da sprint em `~/.claude/projects/.../memory/` (`sprint-001-estado`, `setup-apps-api-task6a`, `esm-nestjs-pegadinhas`, `rls-hardening-app-system`, `e2e-suite-unplugin-swc`, `conectividade-wsl-windows`, `contexto-shell-usuario`, `otel-pretty-quirks`).
 
 ---
 
