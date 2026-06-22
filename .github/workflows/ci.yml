@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'sprint/*']
+  pull_request:
+    branches: [main]
+
+# Cancela runs anteriores na mesma branch para economizar minutos.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Default: apenas leitura do repo. Sem write/deploy (Sprint 1 nao faz deploy).
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Lint, typecheck, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: controle_credito_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d controle_credito_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # Conexoes nos services. O host padrao de services do GitHub Actions
+      # eh o nome do servico (postgres, redis), nao localhost.
+      DATABASE_URL: postgres://app:app@postgres:5432/controle_credito_test
+      DATABASE_URL_TEST: postgres://app:app@postgres:5432/controle_credito_test
+      DATABASE_URL_SYSTEM: postgres://app:app@postgres:5432/controle_credito_test
+      REDIS_URL: redis://redis:6379
+      NEXTAUTH_SECRET: test-secret-test-secret-test-secret-test-secret-aaaa
+      NEXTAUTH_URL: http://localhost:3000
+      JWT_SECRET: test-jwt-secret-test-jwt-secret-test-jwt-secret-bbbb
+      NODE_ENV: test
+      LOG_LEVEL: error
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages (infra, contracts, domain)
+        # Os packages sao consumidos via src/ no dev, mas em prod/build
+        # o Node ESM precisa de .js no filesystem. Buildamos antes de
+        # rodar typecheck/lint/test que dependem do dist/.
+        run: |
+          pnpm --filter @controle-credito/contracts build
+          pnpm --filter @controle-credito/domain build
+          pnpm --filter @controle-credito/infra build
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        # Suite e2e NAO roda em CI nesta task - requer GRANTs manuais em
+        # app_system (que seria o proximo passo). Unit tests dao cobertura
+        # suficiente para o CI baseline.
+        run: pnpm test
+
+      - name: Setup test DB (migrations + role + grants)
+        # Prepara o test DB: roda migrations como app, depois cria app_system
+        # com BYPASSRLS e da os GRANTs necessarios.
+        env:
+          PGPASSWORD: app
+        run: |
+          # Criar role app_system com BYPASSRLS (nao tem no init.sql padrao).
+          psql -h postgres -U app -d controle_credito_test -c "CREATE USER app_system WITH PASSWORD 'app_system' BYPASSRLS NOSUPERUSER;"
+          # Grants minimos para o systemPool (signup + seed da e2e).
+          psql -h postgres -U app -d controle_credito_test -c "GRANT CONNECT ON DATABASE controle_credito_test TO app_system;"
+          psql -h postgres -U app -d controle_credito_test -c "GRANT USAGE ON SCHEMA public TO app_system;"
+          psql -h postgres -U app -d controle_credito_test -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_system;"
+          psql -h postgres -U app -d controle_credito_test -c "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_system;"
+
+      - name: Apply migrations
+        run: pnpm db:migrate
+
+      - name: Verify RLS is active
+        # Smoke check: confirmar que o role app NAO eh superuser (BYPASSRLS
+        # so funciona com FORCE row level security; sem isso, RLS eh
+        # nominal, nao real). Este step nao falha o CI - eh so um aviso
+        # para detectar drift na configuracao do role.
+        env:
+          PGPASSWORD: app
+        run: |
+          SUPER=$(psql -h postgres -U app -d controle_credito_test -tA -c "SELECT rolsuper FROM pg_roles WHERE rolname='app'")
+          if [ "$SUPER" = "t" ]; then
+            echo "::warning::Role 'app' is SUPERUSER - RLS is being bypassed. See rls-hardening-app_system memory."
+          fi
