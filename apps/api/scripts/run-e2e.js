@@ -29,7 +29,9 @@ const env = {
 const child = spawn('pnpm', ['exec', 'vitest', 'run', '--config', 'vitest.config.e2e.ts'], {
   stdio: 'inherit',
   env,
-  cwd: here,
+  // vitest.config.e2e.ts e test/ ficam em apps/api/, nao em apps/api/scripts/.
+  // O caminho eh relativo ao CWD, entao subimos um nivel.
+  cwd: dirname(here),
   shell: true,
 });
 
