@@ -4,6 +4,7 @@ import { type INestApplication } from '@nestjs/common';
 import { AppModule } from '../../src/app.module.js';
 import { pool, redis, withSystemContext, withAccountContext } from '@controle-credito/infra';
 import argon2 from 'argon2';
+import { generateSync as generateTotp } from 'otplib';
 import { randomUUID } from 'node:crypto';
 
 /**
@@ -147,3 +148,54 @@ export async function authedPost(
 }
 
 export { pool, withAccountContext };
+
+/**
+ * Habilita MFA no user (chama /auth/mfa/setup que gera o secret) e em
+ * seguida verifica com o codigo TOTP gerado a partir do secret descriptografado.
+ * Devolve um novo par de tokens com mfaStatus=verified.
+ *
+ * O secret eh gerado pelo /auth/mfa/setup e armazenado encriptado no DB.
+ * Aqui descriptografamos (mesmo algoritmo do MfaService.decrypt: AES-256-GCM
+ * com chave derivada via scrypt de JWT_SECRET) para gerar o codigo TOTP
+ * em tempo real e completar o verify.
+ *
+ * Uso:
+ *   const { accessToken } = await enableMfaAndVerify(app, seeded);
+ *   // agora o token tem mfaStatus=verified
+ */
+export async function enableMfaAndVerify(
+  appRef: INestApplication,
+  seeded: SeededUser,
+): Promise<{ accessToken: string; refreshToken: string }> {
+  // 1. POST /auth/mfa/setup com o accessToken atual -> gera secret + persist
+  const setupRes = await authedPost(appRef, '/auth/mfa/setup', seeded.accessToken, {});
+  if (setupRes.status !== 200) {
+    throw new Error(`mfa setup failed: ${setupRes.status} ${JSON.stringify(setupRes.body)}`);
+  }
+  // setupRes.body pode ser string (superjson-style) ou objeto - normalize.
+  const setupBody = typeof setupRes.body === 'string' ? JSON.parse(setupRes.body) : setupRes.body;
+  const { secret } = setupBody as { secret: string };
+  if (typeof secret !== 'string' || secret.length === 0) {
+    throw new Error(
+      `mfa setup returned invalid secret. body=${JSON.stringify(setupBody)} status=${setupRes.status}`,
+    );
+  }
+
+  // 2. Gera codigo TOTP atual a partir do secret
+  const code = generateTotp({ secret });
+  if (typeof code !== 'string') {
+    throw new Error(`generateTotp returned non-string: ${typeof code} ${code}`);
+  }
+
+  // 3. POST /auth/mfa/verify com o codigo -> emite tokens com mfa=verified
+  const verifyRes = await authedPost(appRef, '/auth/mfa/verify', seeded.accessToken, {
+    code: code,
+  });
+  if (verifyRes.status !== 200) {
+    throw new Error(`mfa verify failed: ${verifyRes.status} ${JSON.stringify(verifyRes.body)}`);
+  }
+  return {
+    accessToken: verifyRes.body.accessToken,
+    refreshToken: verifyRes.body.refreshToken,
+  };
+}
