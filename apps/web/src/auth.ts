@@ -6,11 +6,13 @@ import { LoginRequestSchema } from '@controle-credito/contracts';
 declare module 'next-auth' {
   interface User {
     accountId?: string;
+    mfaStatus?: 'pending' | 'verified' | 'not_required';
   }
   interface Session {
     user: {
       id: string;
       accountId: string;
+      mfaStatus: 'pending' | 'verified' | 'not_required';
     } & DefaultSession['user'];
     accessToken?: string;
   }
@@ -36,6 +38,7 @@ export interface AuthSession extends DefaultSession {
   user: {
     id: string;
     accountId: string;
+    mfaStatus: 'pending' | 'verified' | 'not_required';
   } & DefaultSession['user'];
   accessToken?: string;
 }
@@ -110,6 +113,7 @@ export const authConfig: NextAuthConfig = {
         const decoded = decodeJwt(u.accessToken ?? '');
         token.userId = decoded.sub;
         token.accountId = decoded.account_id;
+        token.mfaStatus = decoded.mfa || 'not_required';
       }
 
       // Refresh automatico se faltar <2min para expirar.
@@ -127,6 +131,7 @@ export const authConfig: NextAuthConfig = {
           const decoded = decodeJwt(refreshed.accessToken);
           token.userId = decoded.sub;
           token.accountId = decoded.account_id;
+          token.mfaStatus = decoded.mfa || 'not_required';
         }
       }
       return token;
@@ -135,10 +140,12 @@ export const authConfig: NextAuthConfig = {
       const t = token as {
         userId?: string;
         accountId?: string;
+        mfaStatus?: 'pending' | 'verified' | 'not_required';
         accessToken?: string;
       };
       session.user.id = t.userId ?? '';
       session.user.accountId = t.accountId ?? '';
+      session.user.mfaStatus = t.mfaStatus ?? 'not_required';
       if (t.accessToken !== undefined) {
         session.accessToken = t.accessToken;
       }
@@ -168,29 +175,35 @@ export const auth = nextAuthResult.auth;
 interface DecodedJwt {
   sub: string;
   account_id: string;
+  mfa: 'pending' | 'verified' | 'not_required' | '';
   exp: number;
 }
 
 /**
  * Decodifica payload do JWT sem verificar assinatura.
- * Token vem do apps/api (valido); usamos apenas para ler sub/account_id.
+ * Token vem do apps/api (valido); usamos apenas para ler claims.
  */
 function decodeJwt(token: string): DecodedJwt {
   const parts = token.split('.');
-  if (parts.length !== 3) return { sub: '', account_id: '', exp: 0 };
+  if (parts.length !== 3) return { sub: '', account_id: '', mfa: '', exp: 0 };
   const payload = parts[1];
-  if (payload == null) return { sub: '', account_id: '', exp: 0 };
+  if (payload == null) return { sub: '', account_id: '', mfa: '', exp: 0 };
   try {
     const json: unknown = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-    if (typeof json !== 'object' || json == null) return { sub: '', account_id: '', exp: 0 };
+    if (typeof json !== 'object' || json == null)
+      return { sub: '', account_id: '', mfa: '', exp: 0 };
     const o = json as Record<string, unknown>;
+    const rawMfa = o['mfa'];
+    const mfa: 'pending' | 'verified' | 'not_required' | '' =
+      rawMfa === 'pending' || rawMfa === 'verified' || rawMfa === 'not_required' ? rawMfa : '';
     return {
       sub: typeof o['sub'] === 'string' ? (o['sub'] as string) : '',
       account_id: typeof o['account_id'] === 'string' ? (o['account_id'] as string) : '',
+      mfa,
       exp: typeof o['exp'] === 'number' ? (o['exp'] as number) : 0,
     };
   } catch {
-    return { sub: '', account_id: '', exp: 0 };
+    return { sub: '', account_id: '', mfa: '', exp: 0 };
   }
 }
 
