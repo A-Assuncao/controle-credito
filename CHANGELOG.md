@@ -39,6 +39,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   - `packages/infra/src/logger.ts`: removido `eslint-disable-next-line` unused.
   - Varios arquivos: CRLF → LF (prettier + ESLint 10 `prettier/prettier`).
   - Varios arquivos: ajustes de formatacao automatica via `prettier --write`.
+- `.github/workflows/ci.yml`: `pnpm/action-setup` v4 → v6, `version: 9 → 11`, `node-version: 22 → 24`. Postgres 18 e Redis 7 mantidos.
 
 ---
 
