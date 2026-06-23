@@ -40,6 +40,3 @@ console.log('  DATABASE_URL_SYSTEM:', env.DATABASE_URL_SYSTEM);
 child.on('exit', (code) => {
   process.exit(code ?? 1);
 });
-
-
-

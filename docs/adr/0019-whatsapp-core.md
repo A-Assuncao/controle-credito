@@ -11,6 +11,7 @@ O sistema serve pessoa fisica que faz emprestimos informais. Tomador e credor **
 Decisao: o WhatsApp do sistema fala **apenas com o usuario**. Para o tomador, o sistema **gera modelos de cobranca** (texto pronto) que o usuario copia/encaminha manualmente pelo WhatsApp dele.
 
 **Por que:**
+
 - Tomador e usuario ja se conhecem — intermediar a conversa e desnecessario.
 - LGPD mais simples (nao somos operador de comunicacao com tomador).
 - Sem custo Meta por envio ao tomador.
@@ -30,17 +31,17 @@ Decisao: o WhatsApp do sistema fala **apenas com o usuario**. Para o tomador, o 
 
 Eventos que disparam mensagem ao usuario:
 
-| Evento | Mensagem exemplo |
-|---|---|
-| Parcela venceu | "Parcela de R$ 500 do Joao venceu ontem. Quer um modelo de cobranca? Responda `cobrar Joao`." |
-| Parcela vence hoje | "Lembrete: parcela de R$ 300 da Maria vence hoje." |
-| Tomador pagou (informado manualmente) | "Pagamento de R$ 500 do Joao registrado. Caixa: R$ 4.500." |
-| Caixa fechou | "Fechamento do periodo realizado. Saldo final R$ 4.500. Ver detalhes no app." |
-| Limite 80% | "Voce esta em 80% do limite de contratos ativos. Plano Pro libera 200." |
-| Risco amarelo/vermelho | "Score da nova proposta para Pedro: 480 (amarelo). Ver detalhes no app." |
-| Fechamento de periodo perto | "Fechamento da semana em 2 dias. Verifique se ha lancamentos pendentes." |
-| Billing | "Sua assinatura Pro foi renovada (R$ 199). Obrigado!" |
-| LLM (Ilimitado) | Resposta da conversa natural |
+| Evento                                | Mensagem exemplo                                                                              |
+| ------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Parcela venceu                        | "Parcela de R$ 500 do Joao venceu ontem. Quer um modelo de cobranca? Responda `cobrar Joao`." |
+| Parcela vence hoje                    | "Lembrete: parcela de R$ 300 da Maria vence hoje."                                            |
+| Tomador pagou (informado manualmente) | "Pagamento de R$ 500 do Joao registrado. Caixa: R$ 4.500."                                    |
+| Caixa fechou                          | "Fechamento do periodo realizado. Saldo final R$ 4.500. Ver detalhes no app."                 |
+| Limite 80%                            | "Voce esta em 80% do limite de contratos ativos. Plano Pro libera 200."                       |
+| Risco amarelo/vermelho                | "Score da nova proposta para Pedro: 480 (amarelo). Ver detalhes no app."                      |
+| Fechamento de periodo perto           | "Fechamento da semana em 2 dias. Verifique se ha lancamentos pendentes."                      |
+| Billing                               | "Sua assinatura Pro foi renovada (R$ 199). Obrigado!"                                         |
+| LLM (Ilimitado)                       | Resposta da conversa natural                                                                  |
 
 **Frequencia:** eventos sao enviados em tempo real. Agrupamento (3 vencimentos -> 1 mensagem).
 
@@ -50,17 +51,17 @@ Eventos que disparam mensagem ao usuario:
 
 Comandos disponiveis (todos os planos com WhatsApp):
 
-| Comando | Descricao | Exemplo de resposta |
-|---|---|---|
-| `status` | Resumo rapido | "3 parcelas vencidas (R$ 1.200), 2 vencendo hoje (R$ 700), caixa R$ 4.500." |
-| `tomadores` | Lista tomadores com pendencia | "1. Joao (2 atrasadas). 2. Maria (1 hoje). Total: R$ 1.900." |
-| `cobrar [nome]` | **Gera modelo de cobranca** (NAO envia) | "Modelo: 'Ola Joao, tudo bem? Lembrete da parcela de R$ 500 que venceu dia 15/06. Qualquer duvida, me chama. Obrigado!' - Copie e encaminhe ao Joao." |
-| `cobrar todos` | Gera modelos para todos com pendencia | "3 modelos gerados. [modelo Joao] [modelo Maria] [modelo Pedro]" |
-| `parcela [nome]` | Detalhe das parcelas | "Joao: 1a vence 15/06 (R$ 500), 2a vence 15/07 (R$ 500)." |
-| `modelo [tipo]` | Modelos pre-prontos | `modelo amigavel`, `modelo firme`, `modelo curto`, `modelo formal` |
-| `ajuda` | Lista comandos | "Comandos: status, tomadores, cobrar [nome], modelo, parar, ajuda" |
-| `parar` | Pausa notificacoes | "Notificacoes pausadas. Para reativar, use `retomar` no app." |
-| `retomar` | Reativa | "Notificacoes reativadas." |
+| Comando          | Descricao                               | Exemplo de resposta                                                                                                                                   |
+| ---------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `status`         | Resumo rapido                           | "3 parcelas vencidas (R$ 1.200), 2 vencendo hoje (R$ 700), caixa R$ 4.500."                                                                           |
+| `tomadores`      | Lista tomadores com pendencia           | "1. Joao (2 atrasadas). 2. Maria (1 hoje). Total: R$ 1.900."                                                                                          |
+| `cobrar [nome]`  | **Gera modelo de cobranca** (NAO envia) | "Modelo: 'Ola Joao, tudo bem? Lembrete da parcela de R$ 500 que venceu dia 15/06. Qualquer duvida, me chama. Obrigado!' - Copie e encaminhe ao Joao." |
+| `cobrar todos`   | Gera modelos para todos com pendencia   | "3 modelos gerados. [modelo Joao] [modelo Maria] [modelo Pedro]"                                                                                      |
+| `parcela [nome]` | Detalhe das parcelas                    | "Joao: 1a vence 15/06 (R$ 500), 2a vence 15/07 (R$ 500)."                                                                                             |
+| `modelo [tipo]`  | Modelos pre-prontos                     | `modelo amigavel`, `modelo firme`, `modelo curto`, `modelo formal`                                                                                    |
+| `ajuda`          | Lista comandos                          | "Comandos: status, tomadores, cobrar [nome], modelo, parar, ajuda"                                                                                    |
+| `parar`          | Pausa notificacoes                      | "Notificacoes pausadas. Para reativar, use `retomar` no app."                                                                                         |
+| `retomar`        | Reativa                                 | "Notificacoes reativadas."                                                                                                                            |
 
 **Comandos destrutivos** (ex.: criar/editar/excluir contrato, registrar pagamento) **nao sao comandos estruturados** — sao feitos via LLM no Ilimitado (com confirmacao) ou via app nos demais planos.
 
@@ -69,16 +70,19 @@ Comandos disponiveis (todos os planos com WhatsApp):
 O sistema gera **texto pronto** para o usuario copiar/encaminhar. Modelos por tier:
 
 **Essencial:**
+
 - 1 modelo fixo, simples, amigavel.
 
 **Pro:**
+
 - 4 modelos pre-definidos: amigavel, firme, curto, formal.
 - Substituicao de variaveis: nome, valor, data, dias atraso.
 
 **Ilimitado:**
+
 - Tudo do Pro.
-- + Modelos custom criados/editados pelo usuario (texto livre + placeholders).
-- + LLM pode gerar modelo sob demanda ("escreve um modelo mais firme pro Joao").
+- - Modelos custom criados/editados pelo usuario (texto livre + placeholders).
+- - LLM pode gerar modelo sob demanda ("escreve um modelo mais firme pro Joao").
 
 **Exemplo de modelo:**
 
@@ -108,6 +112,7 @@ Obrigado(a)!
 ### 5. Templates Meta (apenas para o usuario)
 
 Como nao falamos com tomador, **templates Meta aprovados** sao apenas para:
+
 - Mensagens proativas ao usuario (`notif_parcela_venceu`, `notif_status_geral`, etc.).
 - Verificacao de numero no cadastro (`verify_whatsapp_number`).
 - Mensagens da LLM no Ilimitado (templates para segmentos maiores que 24h).
@@ -131,6 +136,7 @@ Como nao falamos com tomador, **templates Meta aprovados** sao apenas para:
 ## Consequencias
 
 **Positivas:**
+
 - Muito mais simples que o modelo anterior (sem janela 24h para tomador, sem opt-out cross-account).
 - LGPD drasticamente mais simples — nao somos intermediarios de comunicacao com tomador.
 - Custo Meta cai para ~30-50% do modelo anterior.
@@ -138,11 +144,13 @@ Como nao falamos com tomador, **templates Meta aprovados** sao apenas para:
 - Modelos de cobranca dao **sugestao** mas usuario mantem **controle total** do tom.
 
 **Negativas:**
+
 - Sem visibilidade se tomador recebeu a cobranca (usuario que sabe, se quiser).
 - Sem cobranca conversacional automatica (tomador responde no WhatsApp particular, nao temos como capturar).
 - Auto-cobranca (job) deixa de fazer sentido — vira **lembrete para o usuario** ("Voce tem 3 pendencias, quer modelos de cobranca?").
 
 **Mitigacoes:**
+
 - App permite usuario marcar "pagemento recebido" manualmente (fluxo rapido pelo app ou comando `pago [nome] [valor]`).
 - Comando `pago [nome] [valor]` registra pagamento e atualiza estado.
 - App mostra "ultima interacao" manual registrada pelo usuario com o tomador (campo livre, opcional).

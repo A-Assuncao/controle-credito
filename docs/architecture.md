@@ -49,16 +49,16 @@
 
 ## Nível 2 — Containers
 
-| Container | Tecnologia | Responsabilidade |
-|---|---|---|
-| **Web** | Next.js 15 | UI mobile-first, Server Components, rotas autenticadas |
-| **API** | NestJS 10 + TypeORM | Casos de uso, domínio, integração com DB/filas |
-| **Worker** | NestJS (mesma base, entrypoint diferente) | BullMQ: notificações, projeções, integrações |
-| **Postgres** | Neon PostgreSQL 16 | Fonte da verdade; RLS ativo |
-| **Redis** | Upstash Redis | Cache + filas BullMQ |
-| **OIDC** | Ory Kratos + Hydra | Identidade, autenticação, MFA |
-| **Storage** | Cloudflare R2 | Documentos, comprovantes, exports |
-| **Observabilidade** | Grafana Cloud + Sentry | Traces, métricas, logs, erros |
+| Container           | Tecnologia                                | Responsabilidade                                       |
+| ------------------- | ----------------------------------------- | ------------------------------------------------------ |
+| **Web**             | Next.js 15                                | UI mobile-first, Server Components, rotas autenticadas |
+| **API**             | NestJS 10 + TypeORM                       | Casos de uso, domínio, integração com DB/filas         |
+| **Worker**          | NestJS (mesma base, entrypoint diferente) | BullMQ: notificações, projeções, integrações           |
+| **Postgres**        | Neon PostgreSQL 16                        | Fonte da verdade; RLS ativo                            |
+| **Redis**           | Upstash Redis                             | Cache + filas BullMQ                                   |
+| **OIDC**            | Ory Kratos + Hydra                        | Identidade, autenticação, MFA                          |
+| **Storage**         | Cloudflare R2                             | Documentos, comprovantes, exports                      |
+| **Observabilidade** | Grafana Cloud + Sentry                    | Traces, métricas, logs, erros                          |
 
 ---
 
@@ -274,8 +274,6 @@ apps/api/src/
 - Compliance: modelo inclui disclaimer ("caso ja tenha feito o pagamento, desconsidere").
 
 ---
-
-
 
 ## Fluxo crítico 5 — Comando estruturado do usuario via WhatsApp
 

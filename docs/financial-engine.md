@@ -21,8 +21,12 @@
 ```ts
 type Cents = bigint; // 12345n = R$ 123,45
 
-function cents(reais: number | string): Cents { /* ... */ }
-function reaisFromCents(c: Cents): string { /* ... */ }
+function cents(reais: number | string): Cents {
+  /* ... */
+}
+function reaisFromCents(c: Cents): string {
+  /* ... */
+}
 ```
 
 **Por que `bigint`:**
@@ -75,7 +79,7 @@ function roundHalfEven(value: Cents, divisor: number = 1): Cents {
 ```ts
 interface ProductSchema {
   id: string;
-  version: number;             // semver
+  version: number; // semver
   status: 'draft' | 'active' | 'deprecated';
   tenant_id: string;
   name: string;
@@ -83,20 +87,20 @@ interface ProductSchema {
   frequency: 'weekly' | 'biweekly' | 'monthly' | 'custom';
   interest: {
     type: 'simple' | 'compound';
-    rate_per_period: string;   // decimal, ex.: "0.0299" = 2.99% a.m.
+    rate_per_period: string; // decimal, ex.: "0.0299" = 2.99% a.m.
     capitalization?: 'daily' | 'monthly';
   };
   penalty: {
-    fixed?: string;            // % multa
-    daily?: string;            // % mora a.d.
-    grace_days: number;        // carência
+    fixed?: string; // % multa
+    daily?: string; // % mora a.d.
+    grace_days: number; // carência
   };
   early_settlement: {
     method: 'prospectus' | 'simple_deduction';
     deduction_rate?: string;
   };
   rounding: 'HALF_EVEN' | 'HALF_UP' | 'HALF_DOWN';
-  effective_from: string;      // ISO date
+  effective_from: string; // ISO date
 }
 ```
 
@@ -110,12 +114,12 @@ interface ProductSchema {
 
 ## 6. Tipos de contrato no `CORE V1`
 
-| Tipo | Implementação |
-|---|---|
-| **Parcela fixa** (Price) | `pmt = PV × i / (1 − (1+i)^−n)` |
-| **Só juros** | `installment.interest = balance × i`; principal preservado |
-| **Bullet** | Juros acumulados, principal no vencimento |
-| **Custom** | Plugins via `ScheduleGenerator` interface |
+| Tipo                     | Implementação                                              |
+| ------------------------ | ---------------------------------------------------------- |
+| **Parcela fixa** (Price) | `pmt = PV × i / (1 − (1+i)^−n)`                            |
+| **Só juros**             | `installment.interest = balance × i`; principal preservado |
+| **Bullet**               | Juros acumulados, principal no vencimento                  |
+| **Custom**               | Plugins via `ScheduleGenerator` interface                  |
 
 **Cobertura mínima (seção 15.5):**
 
@@ -138,7 +142,7 @@ function generateSchedule(
   periods: number,
   schema: ProductSchema,
   startDate: Date,
-  calendar: Calendar
+  calendar: Calendar,
 ): Installment[] {
   // 1. Calcular valor de parcela conforme modality
   // 2. Gerar datas conforme frequency + calendar
@@ -178,7 +182,7 @@ function generateSchedule(
 function allocatePayment(
   installment: Installment,
   amount: Cents,
-  allocationOrder: AllocationOrder
+  allocationOrder: AllocationOrder,
 ): Allocation[] {
   let remaining = amount;
   const allocations = [];
@@ -215,6 +219,7 @@ function allocatePayment(
 ```
 multa = installment.amount × penalty.fixed
 ```
+
 Aplicada após `grace_days` do vencimento. Cobrada uma vez por parcela.
 
 **Mora:**
@@ -232,10 +237,10 @@ mora_total = mora_dia × days_overdue (após grace_days)
 
 **Dois métodos suportados:**
 
-| Método | Cálculo |
-|---|---|
-| `prospectus` | Soma das parcelas futuras a valor presente (taxa do contrato) |
-| `simple_deduction` | `principal + (interest_pro_rata)` |
+| Método             | Cálculo                                                       |
+| ------------------ | ------------------------------------------------------------- |
+| `prospectus`       | Soma das parcelas futuras a valor presente (taxa do contrato) |
+| `simple_deduction` | `principal + (interest_pro_rata)`                             |
 
 **Política configurável** por schema; padrão recomendado: `prospectus` (mais justo para tomador).
 
@@ -264,12 +269,18 @@ interface FinancialEvent {
   id: string;
   tenant_id: string;
   wallet_id: string;
-  kind: 'loan_disbursement' | 'installment_payment_received'
-      | 'interest_recognized' | 'penalty_applied'
-      | 'manual_cash_in' | 'manual_cash_out'
-      | 'owner_contribution' | 'owner_withdrawal'
-      | 'reversal' | 'period_close_adjustment';
-  amount: Cents;          // signed
+  kind:
+    | 'loan_disbursement'
+    | 'installment_payment_received'
+    | 'interest_recognized'
+    | 'penalty_applied'
+    | 'manual_cash_in'
+    | 'manual_cash_out'
+    | 'owner_contribution'
+    | 'owner_withdrawal'
+    | 'reversal'
+    | 'period_close_adjustment';
+  amount: Cents; // signed
   related_contract_id?: string;
   related_payment_id?: string;
   related_installment_id?: string;

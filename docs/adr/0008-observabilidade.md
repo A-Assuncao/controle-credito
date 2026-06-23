@@ -22,14 +22,17 @@ Necessário tracing distribuído, métricas e logs estruturados com **redaction*
 ## Consequências
 
 **Positivas:**
+
 - Padrão aberto, portável.
 - Free tier cobre early-stage.
 - Tracing ponta-a-ponta atende NFR-10.
 
 **Negativas:**
+
 - Grafana Cloud free tem limites de ingestão (monitorar).
 - OTel SDK em NestJS ainda tem APIs em evolução.
 
 **Mitigação:**
+
 - Alertas quando ingestão > 70% do free tier.
 - Redaction testada em CI com suíte de payloads sintéticos (CPF, e-mail, valores).

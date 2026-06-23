@@ -112,14 +112,14 @@ Exceções raras (ex.: `reputation_signals_aggregated` que agrega de múltiplas 
 
 ### 4.1 Estratégia de armazenamento
 
-| Dado | Forma | Quem vê plaintext |
-|---|---|---|
-| CPF | Hash SHA-256 (com salt global) + últimos 4 dígitos | Próprio titular (sempre) |
-| Nome completo | Texto cifrado (pgcrypto) | Próprio titular |
-| E-mail | Texto cifrado | Próprio titular |
-| Telefone | Texto cifrado | Próprio titular |
-| Endereço | Texto cifrado | Próprio titular |
-| Valor nominal | Texto cifrado em logs | n/a (redaction) |
+| Dado          | Forma                                              | Quem vê plaintext        |
+| ------------- | -------------------------------------------------- | ------------------------ |
+| CPF           | Hash SHA-256 (com salt global) + últimos 4 dígitos | Próprio titular (sempre) |
+| Nome completo | Texto cifrado (pgcrypto)                           | Próprio titular          |
+| E-mail        | Texto cifrado                                      | Próprio titular          |
+| Telefone      | Texto cifrado                                      | Próprio titular          |
+| Endereço      | Texto cifrado                                      | Próprio titular          |
+| Valor nominal | Texto cifrado em logs                              | n/a (redaction)          |
 
 **Chaves de criptografia:**
 
@@ -131,19 +131,19 @@ Exceções raras (ex.: `reputation_signals_aggregated` que agrega de múltiplas 
 
 Tabela `cpf_queries` com colunas **obrigatórias**:
 
-| Coluna | Tipo | Descrição |
-|---|---|---|
-| `id` | uuid | PK |
-| `account_id` | uuid | FK conta (de quem consultou) |
-| `user_id` | uuid | quem consultou (sempre o titular) |
-| `context` | enum | `new_proposal`, `collection`, `periodic_review`, `manual` |
-| `cpf_hash` | text | hash para auditoria (sem plaintext) |
-| `result_layer` | enum | `common`, `aggregated`, `nominal` |
-| `result_summary` | jsonb | retorno normalizado (camadas) |
-| `source` | enum | `internal`, `bureau` |
-| `correlation_id` | uuid | link para trace/log |
-| `mfa_verified` | boolean | MFA no momento? |
-| `created_at` | timestamptz | sempre |
+| Coluna           | Tipo        | Descrição                                                 |
+| ---------------- | ----------- | --------------------------------------------------------- |
+| `id`             | uuid        | PK                                                        |
+| `account_id`     | uuid        | FK conta (de quem consultou)                              |
+| `user_id`        | uuid        | quem consultou (sempre o titular)                         |
+| `context`        | enum        | `new_proposal`, `collection`, `periodic_review`, `manual` |
+| `cpf_hash`       | text        | hash para auditoria (sem plaintext)                       |
+| `result_layer`   | enum        | `common`, `aggregated`, `nominal`                         |
+| `result_summary` | jsonb       | retorno normalizado (camadas)                             |
+| `source`         | enum        | `internal`, `bureau`                                      |
+| `correlation_id` | uuid        | link para trace/log                                       |
+| `mfa_verified`   | boolean     | MFA no momento?                                           |
+| `created_at`     | timestamptz | sempre                                                    |
 
 **Invariante:** `CpfQuery` é append-only. Sem `UPDATE`/`DELETE` permitido por role de aplicação.
 
@@ -208,19 +208,19 @@ CREATE TABLE audit_log (
 
 ### 7.1 Rate limits por superfície
 
-| Superfície | Limite | Janela | Por |
-|---|---|---|---|
-| Login | 10 | 15min | IP |
-| Login (sucesso) | 50 | 1h | user_id |
-| API geral | 1000 | 1min | account_id |
-| `POST /cpf/queries` (agregado) | 30 | 1h | user_id |
-| `POST /cpf/queries` (nominal) | 20 | 1d | user_id |
-| `risk:evaluate` | 60 | 1min | user_id |
-| Comandos WhatsApp (usuario) | 30 | 1h | user_id |
-| Notificacoes WhatsApp (sistema -> usuario) | 20 | 1h | user_id |
-| Mensagens LLM (Ilimitado) | 100/dia, 20/hora | dia/hora | user_id |
-| Custo LLM (Ilimitado) | USD 5/mes (hard cap) | mes | account_id |
-| Recuperação de senha | 5 | 1d | user_id |
+| Superfície                                 | Limite               | Janela   | Por        |
+| ------------------------------------------ | -------------------- | -------- | ---------- |
+| Login                                      | 10                   | 15min    | IP         |
+| Login (sucesso)                            | 50                   | 1h       | user_id    |
+| API geral                                  | 1000                 | 1min     | account_id |
+| `POST /cpf/queries` (agregado)             | 30                   | 1h       | user_id    |
+| `POST /cpf/queries` (nominal)              | 20                   | 1d       | user_id    |
+| `risk:evaluate`                            | 60                   | 1min     | user_id    |
+| Comandos WhatsApp (usuario)                | 30                   | 1h       | user_id    |
+| Notificacoes WhatsApp (sistema -> usuario) | 20                   | 1h       | user_id    |
+| Mensagens LLM (Ilimitado)                  | 100/dia, 20/hora     | dia/hora | user_id    |
+| Custo LLM (Ilimitado)                      | USD 5/mes (hard cap) | mes      | account_id |
+| Recuperação de senha                       | 5                    | 1d       | user_id    |
 
 Implementação: token bucket em Redis (`rate-limiter-flexible`).
 
@@ -286,21 +286,21 @@ A LLM conversacional (Anthropic Claude) tem acesso a dados do usuario via **tool
 
 **Logs (`llm_call_log`):**
 
-| Coluna | Conteudo |
-|---|---|
-| `id` | uuid |
-| `account_id` | FK |
-| `user_id` | FK |
-| `created_at` | timestamp |
-| `user_message` | mensagem do usuario (texto) |
-| `llm_response_text` | resposta da LLM (texto) |
-| `tools_called` | JSONB com tool, args, result |
-| `model` | `claude-sonnet-4-6` ou `claude-opus-4-8` |
-| `input_tokens` | contagem |
-| `output_tokens` | contagem |
-| `cost_usd` | custo calculado |
-| `correlation_id` | link para trace |
-| `confirmation_token` | se houve tool de escrita |
+| Coluna               | Conteudo                                 |
+| -------------------- | ---------------------------------------- |
+| `id`                 | uuid                                     |
+| `account_id`         | FK                                       |
+| `user_id`            | FK                                       |
+| `created_at`         | timestamp                                |
+| `user_message`       | mensagem do usuario (texto)              |
+| `llm_response_text`  | resposta da LLM (texto)                  |
+| `tools_called`       | JSONB com tool, args, result             |
+| `model`              | `claude-sonnet-4-6` ou `claude-opus-4-8` |
+| `input_tokens`       | contagem                                 |
+| `output_tokens`      | contagem                                 |
+| `cost_usd`           | custo calculado                          |
+| `correlation_id`     | link para trace                          |
+| `confirmation_token` | se houve tool de escrita                 |
 
 - Retencao: **90 dias** (mesmo que logs operacionais).
 - Acesso: apenas o proprio usuario pode ver seu historico de conversa.
@@ -347,14 +347,14 @@ A LLM conversacional (Anthropic Claude) tem acesso a dados do usuario via **tool
 
 ## 10. Política de retenção e descarte
 
-| Tipo de dado | Retenção | Descarte |
-|---|---|---|
-| Logs operacionais | 90 dias | Auto-delete em Loki |
-| Trilha de auditoria | 5 anos (mínimo legal) | Após 5 anos, exporta + delete |
-| `cpf_queries` | 5 anos | Anonimização após |
-| `payments`/`contracts` | Enquanto conta ativa + 5 anos | Export + delete ao encerrar |
-| Dados de conta cancelada | 30 dias após cancelamento | Delete hard + confirmação |
-| Sinais compartilhados (anonimizados) | **Mantidos** | Usados para score agregado futuro, sem possibilidade de re-identificação |
+| Tipo de dado                         | Retenção                      | Descarte                                                                 |
+| ------------------------------------ | ----------------------------- | ------------------------------------------------------------------------ |
+| Logs operacionais                    | 90 dias                       | Auto-delete em Loki                                                      |
+| Trilha de auditoria                  | 5 anos (mínimo legal)         | Após 5 anos, exporta + delete                                            |
+| `cpf_queries`                        | 5 anos                        | Anonimização após                                                        |
+| `payments`/`contracts`               | Enquanto conta ativa + 5 anos | Export + delete ao encerrar                                              |
+| Dados de conta cancelada             | 30 dias após cancelamento     | Delete hard + confirmação                                                |
+| Sinais compartilhados (anonimizados) | **Mantidos**                  | Usados para score agregado futuro, sem possibilidade de re-identificação |
 
 **Implementação:** job diário varre dados com TTL vencido e executa delete (com snapshot prévio).
 
@@ -364,14 +364,14 @@ A LLM conversacional (Anthropic Claude) tem acesso a dados do usuario via **tool
 
 ## 11. Backups e DR
 
-| Item | Valor |
-|---|---|
+| Item              | Valor                             |
+| ----------------- | --------------------------------- |
 | Backup automático | Diário (PITR contínuo até 7 dias) |
-| RPO | ≤ 15min |
-| RTO | ≤ 2h |
-| Teste de restore | Trimestral |
-| Storage de backup | Região secundária (us-west-2) |
-| Criptografia | AES-256 em repouso |
+| RPO               | ≤ 15min                           |
+| RTO               | ≤ 2h                              |
+| Teste de restore  | Trimestral                        |
+| Storage de backup | Região secundária (us-west-2)     |
+| Criptografia      | AES-256 em repouso                |
 
 ---
 

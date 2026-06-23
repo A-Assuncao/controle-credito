@@ -58,6 +58,7 @@ O motor de risco precisa servir uma persona PF que **não conhece** análise de 
 ## Consequências
 
 **Positivas:**
+
 - Usuário sempre tem **orientação**, mesmo sem ser obrigado a seguir.
 - Sugestão visível educa o usuário sobre o que considerar.
 - Alerta explícito protege contra decisões claramente perigosas.
@@ -65,11 +66,13 @@ O motor de risco precisa servir uma persona PF que **não conhece** análise de 
 - Reforço positivo incentiva tomadores a pagarem em dia (rede de confiança).
 
 **Negativas:**
+
 - Risco de "alerta ignorado" se usuário quiser aceitar qualquer contrato.
 - Custo computacional de calcular score em todo contrato novo/editado.
 - Complexidade de UX: explicar semáforo, fatores e decisão sem sobrecarregar.
 
 **Mitigações:**
+
 - Trilha de override audita decisões de alto risco (gera sinal para revisão do motor).
 - Cálculo é assíncrono (não bloqueia criação de contrato).
 - UI mostra score em formato simples: "semáforo + 1 frase + botão de detalhes".

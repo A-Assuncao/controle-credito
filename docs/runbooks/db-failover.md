@@ -123,11 +123,11 @@
 
 ## Comunicação
 
-| Audiência | Mensagem |
-|---|---|
-| Usuários | Status page: "Sistema temporariamente instável. Operações podem demorar." |
-| Time interno | Slack `#incidentes` a cada 10min |
-| Sponsor | Se > 30min |
+| Audiência    | Mensagem                                                                  |
+| ------------ | ------------------------------------------------------------------------- |
+| Usuários     | Status page: "Sistema temporariamente instável. Operações podem demorar." |
+| Time interno | Slack `#incidentes` a cada 10min                                          |
+| Sponsor      | Se > 30min                                                                |
 
 ---
 
@@ -139,10 +139,10 @@
 
 ## Contatos
 
-| Papel | Pessoa | Contato |
-|---|---|---|
-| On-call primário | (definir) | (definir) |
-| On-call secundário | (definir) | (definir) |
-| Backend Lead | (definir) | (definir) |
-| Sponsor | (definir) | (definir) |
-| Suporte Neon | suporte@neon.tech | Plano atual define SLA |
+| Papel              | Pessoa            | Contato                |
+| ------------------ | ----------------- | ---------------------- |
+| On-call primário   | (definir)         | (definir)              |
+| On-call secundário | (definir)         | (definir)              |
+| Backend Lead       | (definir)         | (definir)              |
+| Sponsor            | (definir)         | (definir)              |
+| Suporte Neon       | suporte@neon.tech | Plano atual define SLA |

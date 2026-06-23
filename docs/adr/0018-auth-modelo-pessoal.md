@@ -42,17 +42,20 @@ O modelo de uso do produto é **1 usuário por conta** (pessoa física credora, 
 ## Consequências
 
 **Positivas:**
+
 - Modelo simples, sem complexidade de RBAC.
 - Risco de vazamento por compartilhamento de credencial é de responsabilidade do usuário.
 - Single-session reduz superfície de ataque (não há tokens de longa duração em múltiplos dispositivos).
 - Recuperação dupla (e-mail + celular) é mais segura que só e-mail.
 
 **Negativas:**
+
 - Usuário em viagem que perde celular fica sem conta até falar com suporte.
 - Single-session pode frustrar quem alterna entre celular e PC.
 - SMS pode ser interceptado (SIM swap); mitigamos exigindo também o e-mail.
 
 **Mitigações:**
+
 - Backup de códigos TOTP no app (após ativar MFA).
 - Tela de "esqueci celular" com fluxo guiado para suporte.
 - Limite de tentativas de recuperação (5/dia).

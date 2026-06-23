@@ -19,15 +19,18 @@ Adotar **Node.js 22 LTS + TypeScript 5 (modo strict) + NestJS 10 + TypeORM 0.3**
 ## Consequências
 
 **Positivas:**
+
 - Tipagem ponta-a-ponta com o frontend (Next.js + TS).
 - Ecossistema rico para BullMQ, OpenTelemetry SDK, Sentry, Postmark, Stripe.
 - Hiring amplo no Brasil.
 - Monólito modular + eventos internos (seção 12.3) mapeia direto para NestJS modules.
 
 **Negativas:**
+
 - Disciplina de tipos precisa ser enforcement forte no CI (`tsc --noEmit`, ESLint `@typescript-eslint`).
 - Reforçar testes de regressão no motor financeiro (TS não tem a rigidez de tipos numéricos do C#).
 
 **Mitigação:**
+
 - Linter com regras de money handling (`no-floating-decimal`).
 - Testes dourados do motor financeiro com cobertura obrigatória ≥ 95% em `packages/domain`.

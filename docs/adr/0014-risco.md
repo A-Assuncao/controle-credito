@@ -32,6 +32,7 @@ Seção 17 do plano define motor de risco híbrido, mas não fixa score/faixas/s
 ## Consequências
 
 **Positivas:**
+
 - Score com range 0–1000 é conhecido (FICO-style).
 - Faixas bem espaçadas evitam ambiguidade.
 - `hard_block` com justificativa desde o v1 já atende governança futura sem refactor.
@@ -39,11 +40,13 @@ Seção 17 do plano define motor de risco híbrido, mas não fixa score/faixas/s
 - Reforço positivo incentiva bom comportamento na rede.
 
 **Negativas:**
+
 - Calibração inicial sem dados reais — esperado.
 - Risco de "alerta ignorado" pelo usuário.
 - Complexidade de UX (explicar semáforo, fatores, decisão sem sobrecarregar).
 
 **Mitigação:**
+
 - Calibração via telemetria após 90 dias em produção.
 - Modo `simulation` (`FUTURO`) para "what-if" antes de ativar nova política.
 - Trilha de override audita decisões de alto risco.

@@ -25,15 +25,18 @@ O plano recomenda Redis + BullMQ (seção 11.3) para cache e filas. Necessário:
 ## Consequências
 
 **Positivas:**
+
 - Upstash tem HTTP fallback (bom para serverless, embora estejamos em monólito).
 - BullMQ maduro, com UI de inspeção (`bull-board`) em ambiente restrito por IP/VPN.
 - Filas separadas para `notifications`, `projections`, `integrations` evitam starvation cruzada.
 
 **Negativas:**
+
 - Mais um serviço para monitorar (métricas, custos, latência).
 - Necessário cuidado com TTL em chaves sensíveis (não cachear CPF plaintext).
 
 **Mitigação:**
+
 - Métricas por fila em Grafana (`bull_queue_*`).
 - Política explícita de TTL em `docs/security-model.md`.
 - Proibido cachear payload bruto de bureau/CPF (regra 4 do master-plan).

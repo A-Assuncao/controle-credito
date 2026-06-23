@@ -6,6 +6,7 @@
 ## Contexto
 
 Seção 18.5 do plano oferece duas opções:
+
 1. Lançar PREMIUM já nominal (A/B) — maior percepção de valor, maior risco jurídico.
 2. Lançar PREMIUM em modo seguro (C+D) e evoluir para nominal só após validação — menor risco comercial inicial.
 
@@ -24,18 +25,22 @@ Seção 18.5 do plano oferece duas opções:
 ## Consequências
 
 **Positivas:**
+
 - Reduz risco jurídico e reputacional.
 - Preserva a proposta de valor central (operação, caixa, risco intra-tenant).
 - Permite maturar governança/auditoria antes de ativar modo nominal.
 
 **Negativas:**
+
 - Valor comercial inicial do PREMIUM menor.
 - Possível pressão comercial por ativar modo nominal antes do jurídico estar pronto.
 
 **Mitigação:**
+
 - Roadmap explícito com gate jurídico obrigatório antes de `nominal_validated` (seção 25).
 - Comunicação transparente ao mercado sobre escopo do PREMIUM por estágio.
 - Telemetria de uso para calibrar quando há tração suficiente para justificar investimento jurídico.
 
 **Bloqueios:**
+
 - `EXE-007` permanece `BLOQUEADO` no quadro de execução até parecer jurídico.

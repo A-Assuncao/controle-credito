@@ -27,16 +27,19 @@ Seções 15 e 16 do plano definem motor de contratos parametrizável e ledger op
 ## Consequências
 
 **Positivas:**
+
 - `HALF_EVEN` é o padrão bancário e reduz viés estatístico.
 - Ordem de alocação padrão é a mais comum em contratos brasileiros.
 - Multa 2% / mora 1% a.m. é benchmark do mercado.
 - Timezone fixo evita bugs clássicos de "vencimento à meia-noite".
 
 **Negativas:**
+
 - Configurabilidade por tenant exige UI de administração e testes por combinação.
 - Risco de "configuração divergente" entre tenants sem governança.
 
 **Mitigação:**
+
 - `ProductSchema` versionado (seção 15.4) — alteração não afeta contratos antigos.
 - Testes dourados por combinação padrão + combinação customizada.
 - Auditoria de mudanças de configuração por tenant.

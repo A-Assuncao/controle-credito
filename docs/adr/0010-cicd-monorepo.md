@@ -23,15 +23,18 @@ Necessário pipeline confiável com preview environments isolados por PR e deplo
 ## Consequências
 
 **Positivas:**
+
 - Cache do Turborepo reduz tempo de CI.
 - Preview por PR isola validação visual e de integração.
 - Versionamento automatizado (release-please) gera changelog.
 
 **Negativas:**
+
 - Complexidade inicial maior que repo único.
 - Curva de aprendizado do Turborepo.
 
 **Mitigação:**
+
 - Documentação inicial no README com diagrama do monorepo.
 - Pipeline de CI compartilhada via composite actions.
 - Lockfile com pnpm (mais rápido e eficiente em disco que npm/yarn).

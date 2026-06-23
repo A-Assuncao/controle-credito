@@ -14,14 +14,14 @@ O público-alvo é **pessoa física** (credor individual) com caso de borda MEI.
 
 ### Tabela de tiers
 
-| Plano | Preço/mês (BRL) | Contratos ativos | Tomadores | E-mails (complementar) | WhatsApp (principal) | Score cross-account |
-|---|---|---|---|---|---|---|
-| **Essencial** | R$ 79 | 30 | 50 | 500 | Notificacoes + **comandos basicos** (`status`, `ajuda`, `parar`) | — |
-| **Pro** | R$ 199 | 200 | 500 | 3.000 | Notificacoes + **todos os comandos** + envio ao tomador (50 msg/mes) + auto-cobranca | **Médio** (agregado) |
-| **Ilimitado** | R$ 449 | ∞ | ∞ | 15.000 | Notificacoes + todos os comandos + LLM + modelos custom + sob demanda via LLM | **Premium** (nominal) |
-| Excedente Essencial | — | R$ 1,50/contrato | R$ 0,50/tomador | R$ 0,05/e-mail | (WhatsApp ao usuario e sempre incluso) | — |
-| Excedente Pro | — | R$ 1,00/contrato | — | R$ 0,04/e-mail | — | R$ 1,50/consulta agregada |
-| Excedente Ilimitado | — | — | — | R$ 0,03/e-mail | — | USD 5/mes hard cap para LLM | R$ 5,00/consulta bureau externa |
+| Plano               | Preço/mês (BRL) | Contratos ativos | Tomadores       | E-mails (complementar) | WhatsApp (principal)                                                                 | Score cross-account         |
+| ------------------- | --------------- | ---------------- | --------------- | ---------------------- | ------------------------------------------------------------------------------------ | --------------------------- | ------------------------------- |
+| **Essencial**       | R$ 79           | 30               | 50              | 500                    | Notificacoes + **comandos basicos** (`status`, `ajuda`, `parar`)                     | —                           |
+| **Pro**             | R$ 199          | 200              | 500             | 3.000                  | Notificacoes + **todos os comandos** + envio ao tomador (50 msg/mes) + auto-cobranca | **Médio** (agregado)        |
+| **Ilimitado**       | R$ 449          | ∞                | ∞               | 15.000                 | Notificacoes + todos os comandos + LLM + modelos custom + sob demanda via LLM        | **Premium** (nominal)       |
+| Excedente Essencial | —               | R$ 1,50/contrato | R$ 0,50/tomador | R$ 0,05/e-mail         | (WhatsApp ao usuario e sempre incluso)                                               | —                           |
+| Excedente Pro       | —               | R$ 1,00/contrato | —               | R$ 0,04/e-mail         | —                                                                                    | R$ 1,50/consulta agregada   |
+| Excedente Ilimitado | —               | —                | —               | R$ 0,03/e-mail         | —                                                                                    | USD 5/mes hard cap para LLM | R$ 5,00/consulta bureau externa |
 
 ### Observacoes
 
@@ -61,17 +61,20 @@ O público-alvo é **pessoa física** (credor individual) com caso de borda MEI.
 ## Consequências
 
 **Positivas:**
+
 - Decisão de compra simples (3 tiers, fácil de explicar).
 - Margem protegida por excedentes e gating por feature.
 - Upgrade orgânico conforme uso cresce.
 - WhatsApp puxa upgrade (cobrança é dor real).
 
 **Negativas:**
+
 - Tabela ainda não calibrada com dados reais.
 - Risco de subprecificação em Pro com uso intenso.
 - Custo WhatsApp pode comprimir margem do Ilimitado se uso for alto.
 
 **Mitigações:**
+
 - Revisão trimestral com base em uso médio e custo marginal.
 - Tabela de uso atual sempre visível no app (transparência).
 - Meta-custo WhatsApp orçado e contingenciado.
@@ -82,5 +85,6 @@ O público-alvo é **pessoa física** (credor individual) com caso de borda MEI.
 Será revisitado após 90 dias em produção com dados reais de cobrança, uso e margem.
 
 **Relacionados:**
+
 - ADR-0019 (WhatsApp CORE)
 - ADR-0021 (cross-account por nível)

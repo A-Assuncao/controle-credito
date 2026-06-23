@@ -27,6 +27,7 @@ Adotar **NextAuth.js v5 (Auth.js)** para autenticação na Sprint 1, com:
 ## Consequências
 
 ### Positivas
+
 - Menos peça móvel: 1 lib a mais (`next-auth`) em vez de 2 serviços (Kratos + Hydra).
 - Tudo em TypeScript, auditável no mesmo repositório.
 - Sem novo subprocessor de identidade.
@@ -34,11 +35,13 @@ Adotar **NextAuth.js v5 (Auth.js)** para autenticação na Sprint 1, com:
 - `apps/web` e `apps/api` compartilham o mesmo secret JWT — verificação de sessão é só `jose.jwtVerify`, sem chamada extra a Kratos.
 
 ### Negativas
+
 - Própria implementação da trilha de eventos de identidade (login, logout, falha de MFA). Mitigação: `AuditLoggerInterceptor` cobre isso desde a Sprint 1.
 - Recuperação por SMS depende de provider externo (Twilio ou similar). Mitigação: provider é adapter; a Sprint 1 entrega a interface, a Sprint 2 liga em produção.
 - NextAuth v5 ainda está em beta (Auth.js). Mitigação: pinar versão e avaliar migração quando sair GA; a API básica (`signIn`, `signOut`, `getSession`, JWT callback) é estável.
 
 ### Riscos aceitos
+
 - Se o produto crescer para multi-user por conta (não previsto), NextAuth ainda suporta, mas com mais código de aplicação. Aceitável porque o modelo single-user é decisão de produto (ADR-0018).
 - Bug de segurança no JWT (assinatura, algoritmo) é risco集中. Mitigação: usar `jose` (mantido pelo Panva), validar `alg` explicitamente, secret rotacionável, testes de sessão forjada em CI.
 

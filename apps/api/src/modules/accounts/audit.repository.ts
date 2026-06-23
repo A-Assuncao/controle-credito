@@ -43,8 +43,8 @@ export class AuditLogRepository {
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
       // params + limit + offset
-      const limitParam = p++;
-      const offsetParam = p++;
+      const limitParam = p;
+      const offsetParam = p + 1;
       const sql = `
         SELECT * FROM audit_log
         ${where}
@@ -73,7 +73,8 @@ export class AuditLogRepository {
         params.push(query.from);
       }
       if (query.to !== undefined) {
-        conditions.push(`created_at <= $${p++}::timestamptz`);
+        const pTo = p + 1;
+        conditions.push(`created_at <= $${pTo}::timestamptz`);
         params.push(query.to);
       }
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';

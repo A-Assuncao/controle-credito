@@ -2,6 +2,25 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
+# Hoisting de pacotes que scripts rodando de CWDs de workspace (ex: eslint
+# carregado em apps/*/package.json) precisam enxergar como se fossem globais.
+# Sem isso, pnpm 11 strict (isolated) esconde deps do root e o `eslint.config.mjs`
+# quebra com "Cannot find package '@eslint/js'".
+publicHoistPattern:
+  - '@eslint/js'
+  - 'eslint-config-prettier'
+  - 'eslint-plugin-prettier'
+  - '@typescript-eslint/*'
+  - 'globals'
+
+allowBuilds:
+  '@nestjs/core': true
+  '@swc/core': true
+  argon2: true
+  esbuild: true
+  protobufjs: true
+  sharp: true
+
 # pnpm overrides (movido do package.json, ignorado desde pnpm 9+)
 overrides:
   '@humanwhocodes/config-array': npm:@eslint/config-array@^0.23.5

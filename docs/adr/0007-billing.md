@@ -20,18 +20,22 @@ Necessário gateway de assinatura com webhooks idempotentes e suporte a tiers (s
 ## Consequências
 
 **Positivas:**
+
 - Ecossistema maduro, código pronto em NestJS (`@nestjs/stripe`).
 - Suporte nativo a BR (BRL, boleto via PIX, se necessário no futuro).
 - Dashboard financeiro pronto.
 
 **Negativas:**
+
 - Custo % por transação (considerar no plano Pro/Business).
 - Necessário PCI compliance — mitigada por hospedar checkout no Stripe.
 
 **Mitigação:**
+
 - Camada `BillingProvider` no backend, isolando domínio de Stripe SDK.
 - Sincronização periódica de assinatura como `source of truth` (Stripe → nosso DB).
 - Replay de webhook com `Stripe CLI` em ambiente dev.
 
 **Pendência:**
+
 - Validar jurídico se uso de Stripe implica contrato adicional com cláusulas LGPD.

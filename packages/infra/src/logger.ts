@@ -49,7 +49,6 @@ const isDev = env.NODE_ENV === 'development';
 function buildDevTransport(): pino.TransportSingleOptions | undefined {
   if (!isDev) return undefined;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require.resolve('pino-pretty');
     return {
       target: 'pino-pretty',

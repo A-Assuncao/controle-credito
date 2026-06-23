@@ -9,9 +9,7 @@ import type { Config } from 'tailwindcss';
  * Conteudo vem de globals.css via @tailwind directives.
  */
 const config: Config = {
-  content: [
-    './src/**/*.{ts,tsx,js,jsx}',
-  ],
+  content: ['./src/**/*.{ts,tsx,js,jsx}'],
   theme: {
     extend: {},
   },

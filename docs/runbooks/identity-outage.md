@@ -65,11 +65,11 @@ kubectl rollout undo deployment/kratos -n identity
 
 ## Comunicação
 
-| Audiência | Canal | Mensagem |
-|---|---|---|
-| Usuários | Status page + banner no app | "Login temporariamente indisponível. Sessões ativas podem expirar. Equipe investigando." |
-| Time interno | Slack `#incidentes` | Atualização a cada 15min |
-| Sponsor | E-mail se > 1h | Status, ETA, próximo update |
+| Audiência    | Canal                       | Mensagem                                                                                 |
+| ------------ | --------------------------- | ---------------------------------------------------------------------------------------- |
+| Usuários     | Status page + banner no app | "Login temporariamente indisponível. Sessões ativas podem expirar. Equipe investigando." |
+| Time interno | Slack `#incidentes`         | Atualização a cada 15min                                                                 |
+| Sponsor      | E-mail se > 1h              | Status, ETA, próximo update                                                              |
 
 ---
 
@@ -87,9 +87,9 @@ Dentro de 48h:
 
 ## Contatos
 
-| Papel | Pessoa | Contato |
-|---|---|---|
-| On-call primário | (definir) | (definir) |
+| Papel              | Pessoa    | Contato   |
+| ------------------ | --------- | --------- |
+| On-call primário   | (definir) | (definir) |
 | On-call secundário | (definir) | (definir) |
-| Security Lead | (definir) | (definir) |
-| Sponsor | (definir) | (definir) |
+| Security Lead      | (definir) | (definir) |
+| Sponsor            | (definir) | (definir) |

@@ -19,14 +19,17 @@ Frontend precisa ser **mobile-first** (seção 22), operar com usuários majorit
 ## Consequências
 
 **Positivas:**
+
 - Mesma linguagem do backend (TS) → contratos tipados ponta-a-ponta.
 - shadcn/ui é copiado para o repo (não é dependência npm), auditável e customizável.
 - Server Components do App Router reduzem JS no cliente (importante para mobile em rede instável).
 - Conformidade WCAG via Radix por padrão.
 
 **Negativas:**
+
 - App Router ainda evolui — exige cuidado com Server Actions vs API routes.
 - shadcn/ui exige manutenção manual de componentes.
 
 **Mitigação:**
+
 - Padrão de uso: Server Components para leitura, Client Components para interação, Server Actions só para mutações internas (mutações externas vão pela API).

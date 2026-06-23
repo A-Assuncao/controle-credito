@@ -14,10 +14,10 @@ O "Serasa interno" do produto usa dados de **todos os contratos de todos os usu�
 
 ### Níveis
 
-| Nível | Plano | Conteúdo |
-|---|---|---|
-| **Comum** | Essencial | Apenas dados do próprio usuário. Análise de risco intra-account. |
-| **Médio** | Pro | Estatísticas agregadas da base: pendências, % atraso, ticket médio, tempo médio. |
+| Nível       | Plano              | Conteúdo                                                                            |
+| ----------- | ------------------ | ----------------------------------------------------------------------------------- |
+| **Comum**   | Essencial          | Apenas dados do próprio usuário. Análise de risco intra-account.                    |
+| **Médio**   | Pro                | Estatísticas agregadas da base: pendências, % atraso, ticket médio, tempo médio.    |
 | **Premium** | Ilimitado (inclui) | Detalhe nominal: lista de usuários, contratos, parcelas, status onde o CPF aparece. |
 
 ### Consentimento do tomador
@@ -64,23 +64,27 @@ O "Serasa interno" do produto usa dados de **todos os contratos de todos os usu�
 ## Consequências
 
 **Positivas:**
+
 - Diferencial competitivo real desde o Essencial (Comum já entrega valor via análise intra-account).
 - Cross-account agrega inteligência sem expor PII sem necessidade.
 - Consentimento dá base legal sólida (LGPD art. 7º, I).
 - Gating por plano gera upgrade orgânico.
 
 **Negativas:**
+
 - Custo computacional para agregação em tempo real (mitigado com materialized views + job noturno).
 - Risco de contestação por titular insatisfeito com sinal.
 - Complexidade de auditoria e rate limiting.
 
 **Mitigações:**
+
 - Job noturno agrega sinais; cache Redis com TTL de 1h.
 - Processo de contestação registrado em compliance.
 - Trilha imutável e revisão periódica de acessos (a cada 90 dias).
 - Pseudonimização forte + salt rotacionado.
 
 **Pendências:**
+
 - Parecer jurídico formal antes do Estágio 2 (PREMIUM nominal).
 - Definição do canal de contestação (e-mail DPO ou formulário).
 - Política de anonimização após revogação de consentimento (LGPD art. 16).

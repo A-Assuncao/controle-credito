@@ -5,10 +5,10 @@
   "description": "SaaS de gestao de emprestimos pessoais (Brasil). Monorepo: NestJS API + Next.js web.",
   "license": "UNLICENSED",
   "engines": {
-    "node": ">=22.0.0",
-    "pnpm": ">=9.0.0"
+    "node": ">=24.0.0",
+    "pnpm": ">=11.0.0"
   },
-  "packageManager": "pnpm@9.15.9",
+  "packageManager": "pnpm@11.9.0",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -26,7 +26,8 @@
   "devDependencies": {
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
-    "@types/node": "^26.0.0",
+    "@eslint/js": "^10.0.0",
+    "@types/node": "^24.13.0",
     "@types/pg": "^8.11.10",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^9.1.0",

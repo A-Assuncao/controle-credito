@@ -47,11 +47,11 @@ Diferenciais pensados desde o design: **conta pessoal isolada** (1 usuario por c
 
 ## Tiers
 
-| Plano | Preco/mes (BRL) | Contratos | Tomadores | WhatsApp (com usuario) | Modelos de cobranca | LLM | Score cross-account |
-|---|---|---|---|---|---|---|---|
-| **Essencial** | R$ 79 | 30 | 50 | Notificacoes + comandos basicos | 1 fixo | — | — |
-| **Pro** | R$ 199 | 200 | 500 | + todos os comandos | 4 pre-definidos | — | Medio (agregado) |
-| **Ilimitado** | R$ 449 | ∞ | ∞ | + todos os comandos | Custom + sob demanda | **Claude** | Premium (nominal) |
+| Plano         | Preco/mes (BRL) | Contratos | Tomadores | WhatsApp (com usuario)          | Modelos de cobranca  | LLM        | Score cross-account |
+| ------------- | --------------- | --------- | --------- | ------------------------------- | -------------------- | ---------- | ------------------- |
+| **Essencial** | R$ 79           | 30        | 50        | Notificacoes + comandos basicos | 1 fixo               | —          | —                   |
+| **Pro**       | R$ 199          | 200       | 500       | + todos os comandos             | 4 pre-definidos      | —          | Medio (agregado)    |
+| **Ilimitado** | R$ 449          | ∞         | ∞         | + todos os comandos             | Custom + sob demanda | **Claude** | Premium (nominal)   |
 
 Detalhamento em [ADR-0020](docs/adr/0020-tiering-pessoa-fisica.md), [ADR-0019](docs/adr/0019-whatsapp-core.md) e [ADR-0023](docs/adr/0023-llm-conversacional.md).
 
@@ -59,17 +59,17 @@ Detalhamento em [ADR-0020](docs/adr/0020-tiering-pessoa-fisica.md), [ADR-0019](d
 
 ## Estado operacional
 
-| Item | Status | Ultima atualizacao |
-|---|---|---|
-| Planejamento (master-plan) | Concluido | 2026-04-22 |
-| Documentacao tecnica (v0.2.0) | **Concluida** | 2026-06-20 |
-| Fundacao conta/IAM/auditoria (EXE-001) | `EM_ANDAMENTO (preparacao)` | 2026-06-20 |
-| Contratos + parcelas + recebimentos (EXE-002) | `NAO_INICIADO` | — |
-| Caixa + projecoes + dashboard (EXE-003) | `NAO_INICIADO` | — |
-| Risco + WhatsApp + e-mail (EXE-004) | `NAO_INICIADO` | — |
-| Billing SaaS + limites por plano (EXE-005) | `NAO_INICIADO` | — |
-| PREMIUM modo seguro (EXE-006) | `NAO_INICIADO` | — |
-| PREMIUM nominal cross-account (EXE-007) | `BLOQUEADO` (validacao juridica) | — |
+| Item                                          | Status                           | Ultima atualizacao |
+| --------------------------------------------- | -------------------------------- | ------------------ |
+| Planejamento (master-plan)                    | Concluido                        | 2026-04-22         |
+| Documentacao tecnica (v0.2.0)                 | **Concluida**                    | 2026-06-20         |
+| Fundacao conta/IAM/auditoria (EXE-001)        | `EM_ANDAMENTO (preparacao)`      | 2026-06-20         |
+| Contratos + parcelas + recebimentos (EXE-002) | `NAO_INICIADO`                   | —                  |
+| Caixa + projecoes + dashboard (EXE-003)       | `NAO_INICIADO`                   | —                  |
+| Risco + WhatsApp + e-mail (EXE-004)           | `NAO_INICIADO`                   | —                  |
+| Billing SaaS + limites por plano (EXE-005)    | `NAO_INICIADO`                   | —                  |
+| PREMIUM modo seguro (EXE-006)                 | `NAO_INICIADO`                   | —                  |
+| PREMIUM nominal cross-account (EXE-007)       | `BLOQUEADO` (validacao juridica) | —                  |
 
 **Gate atual:** sem `AUTORIZO CODAR`. Nenhum codigo de producao sera escrito sem autorizacao explicita com escopo definido (regra 1 do master-plan).
 
@@ -77,21 +77,21 @@ Detalhamento em [ADR-0020](docs/adr/0020-tiering-pessoa-fisica.md), [ADR-0019](d
 
 ## Stack-alvo (decidida em ADR-0001, 0002, 0003, 0004, 0005, 0006, 0007, 0019, 0020)
 
-| Camada | Tecnologia |
-|---|---|
-| Backend | Node.js 22 LTS + TypeScript 5 (strict) + NestJS 10 + TypeORM |
-| Frontend | Next.js 15 (App Router) + TypeScript + Tailwind + shadcn/ui |
-| Banco | PostgreSQL 16 (Neon, region `us-east-1`) com **RLS ativo** |
-| Cache + Filas | Redis (Upstash) + BullMQ |
-| Auth | Ory Kratos + Hydra (self-hosted) com MFA TOTP opcional |
-| E-mail | Postmark |
-| WhatsApp | Meta Cloud API (oficial) — canal principal com usuario (notificacoes, comandos) |
-| LLM | Anthropic Claude (Sonnet 4.6 / Opus 4.8) — apenas no plano Ilimitado |
-| Billing | Stripe |
-| Observabilidade | OpenTelemetry -> Grafana Cloud + Sentry |
-| Storage | Cloudflare R2 (S3-compativel) |
-| CI/CD | GitHub Actions + Neon preview branches |
-| Monorepo | pnpm workspaces + Turborepo |
+| Camada          | Tecnologia                                                                      |
+| --------------- | ------------------------------------------------------------------------------- |
+| Backend         | Node.js 22 LTS + TypeScript 5 (strict) + NestJS 10 + TypeORM                    |
+| Frontend        | Next.js 15 (App Router) + TypeScript + Tailwind + shadcn/ui                     |
+| Banco           | PostgreSQL 16 (Neon, region `us-east-1`) com **RLS ativo**                      |
+| Cache + Filas   | Redis (Upstash) + BullMQ                                                        |
+| Auth            | Ory Kratos + Hydra (self-hosted) com MFA TOTP opcional                          |
+| E-mail          | Postmark                                                                        |
+| WhatsApp        | Meta Cloud API (oficial) — canal principal com usuario (notificacoes, comandos) |
+| LLM             | Anthropic Claude (Sonnet 4.6 / Opus 4.8) — apenas no plano Ilimitado            |
+| Billing         | Stripe                                                                          |
+| Observabilidade | OpenTelemetry -> Grafana Cloud + Sentry                                         |
+| Storage         | Cloudflare R2 (S3-compativel)                                                   |
+| CI/CD           | GitHub Actions + Neon preview branches                                          |
+| Monorepo        | pnpm workspaces + Turborepo                                                     |
 
 ---
 

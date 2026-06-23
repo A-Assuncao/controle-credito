@@ -27,10 +27,10 @@ Decisao: no plano **Ilimitado**, adicionar uma LLM que o usuario pode conversar 
 
 ### Canais de acesso
 
-| Canal | Como |
-|---|---|
-| **WhatsApp** | Usuario conversa com a LLM via mesma interface de comandos |
-| **App (web)** | Widget de chat no canto da tela |
+| Canal         | Como                                                       |
+| ------------- | ---------------------------------------------------------- |
+| **WhatsApp**  | Usuario conversa com a LLM via mesma interface de comandos |
+| **App (web)** | Widget de chat no canto da tela                            |
 
 ### Capacidades (escopo de tools)
 
@@ -38,28 +38,28 @@ A LLM tem acesso a um conjunto **whitelist** de tools (function calling):
 
 **Leituras (sem confirmacao):**
 
-| Tool | Descricao |
-|---|---|
-| `list_parties` | Lista tomadores com filtros |
-| `get_party` | Detalhe de um tomador |
-| `list_contracts` | Lista contratos com filtros (status, vencimento, valor) |
-| `get_contract` | Detalhe de um contrato |
-| `list_installments` | Lista parcelas (vencidas, a vencer, pagas) |
-| `get_cash_summary` | Resumo de caixa (saldo, projecao 7 dias) |
-| `get_risk_signal` | Sinal de risco do CPF (cross-account conforme tier) |
-| `search_app_help` | Busca na documentacao de ajuda do app |
+| Tool                | Descricao                                               |
+| ------------------- | ------------------------------------------------------- |
+| `list_parties`      | Lista tomadores com filtros                             |
+| `get_party`         | Detalhe de um tomador                                   |
+| `list_contracts`    | Lista contratos com filtros (status, vencimento, valor) |
+| `get_contract`      | Detalhe de um contrato                                  |
+| `list_installments` | Lista parcelas (vencidas, a vencer, pagas)              |
+| `get_cash_summary`  | Resumo de caixa (saldo, projecao 7 dias)                |
+| `get_risk_signal`   | Sinal de risco do CPF (cross-account conforme tier)     |
+| `search_app_help`   | Busca na documentacao de ajuda do app                   |
 
 **Escritas (COM confirmacao obrigatoria):**
 
-| Tool | Descricao | Confirmacao |
-|---|---|---|
-| `create_contract` | Criar contrato com parametros | "Confirma criar contrato de R$ X para [nome] em Y parcelas? Responda SIM." |
-| `update_contract` | Editar contrato | "Confirma alterar [campo] de [A] para [B]?" |
-| `record_payment` | Registrar pagamento recebido | "Confirma registrar pagamento de R$ X do [nome]?" |
-| `cancel_contract` | Cancelar contrato (soft delete) | "Confirma CANCELAR o contrato com [nome]? Valor em aberto: R$ X." |
-| `create_party` | Criar novo tomador | "Confirma criar tomador [nome] com CPF XXX?" |
-| `update_party` | Editar tomador | Confirmacao |
-| `generate_collection_template` | Gerar modelo de cobranca | (retorna texto, usuario copia/encaminha) |
+| Tool                           | Descricao                       | Confirmacao                                                                |
+| ------------------------------ | ------------------------------- | -------------------------------------------------------------------------- |
+| `create_contract`              | Criar contrato com parametros   | "Confirma criar contrato de R$ X para [nome] em Y parcelas? Responda SIM." |
+| `update_contract`              | Editar contrato                 | "Confirma alterar [campo] de [A] para [B]?"                                |
+| `record_payment`               | Registrar pagamento recebido    | "Confirma registrar pagamento de R$ X do [nome]?"                          |
+| `cancel_contract`              | Cancelar contrato (soft delete) | "Confirma CANCELAR o contrato com [nome]? Valor em aberto: R$ X."          |
+| `create_party`                 | Criar novo tomador              | "Confirma criar tomador [nome] com CPF XXX?"                               |
+| `update_party`                 | Editar tomador                  | Confirmacao                                                                |
+| `generate_collection_template` | Gerar modelo de cobranca        | (retorna texto, usuario copia/encaminha)                                   |
 
 **Acoes BLOQUEADAS para a LLM (mesmo no Ilimitado):**
 
@@ -139,7 +139,7 @@ A LLM tem acesso a um conjunto **whitelist** de tools (function calling):
 **Dados enviados a LLM:**
 
 - **Nunca plaintext**: CPF, valores nominais, dados de tomadores vao **mascarados** ou **resumidos** quando nao essenciais.
-- Ex.: "Joao da Silva (CPF ***123.456.789-**)" em vez de CPF completo.
+- Ex.: "Joao da Silva (CPF **\*123.456.789-**)" em vez de CPF completo.
 - Valores: usuario pode pedir "quanto falta" → LLM chama tool que retorna valor real; LLM **nao precisa ver todos os valores historicos** — so o necessario para a pergunta atual.
 
 **System prompt:**
@@ -158,11 +158,11 @@ A LLM tem acesso a um conjunto **whitelist** de tools (function calling):
 
 **Rate limiting:**
 
-| Limite | Valor |
-|---|---|
-| Mensagens por dia | 100 |
-| Mensagens por hora | 20 |
-| Tool calls por mensagem | 10 |
+| Limite                   | Valor               |
+| ------------------------ | ------------------- |
+| Mensagens por dia        | 100                 |
+| Mensagens por hora       | 20                  |
+| Tool calls por mensagem  | 10                  |
 | Custo mensal por usuario | USD 5 (limite hard) |
 
 Excedente: bloqueio suave com mensagem "Voce atingiu o limite diario. Tente novamente amanha ou use o app."
@@ -177,25 +177,28 @@ Excedente: bloqueio suave com mensagem "Voce atingiu o limite diario. Tente nova
 
 - Custo Anthropic: ~USD 0.003 por mensagem tipica (Sonnet).
 - Custo WhatsApp (Meta) por resposta da LLM: varia se for template ou livre (dentro de 24h do usuario).
-- Estimativa: 100 mensagens/dia * 30 dias = 3000 mensagens/mes/usuario ≈ USD 9/mes + Meta.
+- Estimativa: 100 mensagens/dia \* 30 dias = 3000 mensagens/mes/usuario ≈ USD 9/mes + Meta.
 - Margem do plano Ilimitado (R$ 449) absorve com folga para usuarios medios.
 - Usuarios muito ativos: rate limit + nudge para usar comandos estruturados.
 
 ## Consequencias
 
 **Positivas:**
+
 - UX diferenciada — usuario fala naturalmente em vez de decorar comandos.
 - Funcoes rotineiras aceleradas (criar contrato, registrar pagamento) — 1 mensagem vs varios cliques.
 - **Diferencial competitivo** claro do plano Ilimitado.
 - Auditoria rigorosa mitiga riscos de LLM agir fora do escopo.
 
 **Negativas:**
+
 - Custo recorrente maior para usuarios ativos.
 - LLM pode alucinar ou interpretar mal — mitigamos com tool use deterministico + confirmacao.
 - Privacidade: dados do usuario vao para provider LLM (mitigamos com mascaramento e termos Anthropic).
 - Latencia: 1-3s por resposta (vs 200ms de comando estruturado).
 
 **Mitigacoes:**
+
 - System prompt rigoroso com escopo de tools.
 - Toda escrita exige confirmacao.
 - Logs detalhados para auditoria.

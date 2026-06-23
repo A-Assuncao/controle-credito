@@ -19,14 +19,17 @@ Necessário storage S3-compatível para documentos legais (confissão de dívida
 ## Consequências
 
 **Positivas:**
+
 - Sem custo de egress (vantagem crítica para exports de relatórios).
 - Integração S3 padrão.
 - Region configurável (americas por padrão).
 
 **Negativas:**
+
 - Vendor lock-in moderado (mitigado por S3-compatibilidade).
 - Latência para `us-east-1` pode variar.
 
 **Mitigação:**
+
 - Adapter `FileStorageProvider` com interface S3 — swap trivial para AWS S3 ou GCS.
 - Criptografia em repouso habilitada por padrão (R2 já oferece).

@@ -163,6 +163,7 @@ controle-credito/
 ```
 
 **Mudanças vs plano original:**
+
 - Sem `modules/tenant/` (substituido por `accounts/` — cada conta = 1 pessoa).
 - Sem `user_roles`, `roles`, `permissions` (modelo single-user).
 - `AccountContextMiddleware` no lugar de `TenantContextMiddleware`.
@@ -340,20 +341,20 @@ GET    /api/accounts/me/audit-log   # trilha (com filtros)
 
 ## Estimativa
 
-| Bloco | Tempo estimado |
-|---|---|
-| Setup monorepo + tooling | 1 dia |
-| Migrations + RLS | 1 dia |
-| Auth (Kratos integration) + MFA opcional | 2 dias |
-| Recuperação de senha (e-mail + celular) | 1 dia |
-| Single-session enforcement | 0.5 dia |
-| Audit log + interceptor | 1 dia |
-| UI shell (login, MFA, recuperação, dashboard placeholder) | 2 dias |
-| Testes (unit + integração + e2e) | 2 dias |
-| CI/CD workflows | 1 dia |
-| Observabilidade + logger redaction | 1 dia |
-| Documentação final | 0.5 dia |
-| **Total** | **~13 dias uteis** |
+| Bloco                                                     | Tempo estimado     |
+| --------------------------------------------------------- | ------------------ |
+| Setup monorepo + tooling                                  | 1 dia              |
+| Migrations + RLS                                          | 1 dia              |
+| Auth (Kratos integration) + MFA opcional                  | 2 dias             |
+| Recuperação de senha (e-mail + celular)                   | 1 dia              |
+| Single-session enforcement                                | 0.5 dia            |
+| Audit log + interceptor                                   | 1 dia              |
+| UI shell (login, MFA, recuperação, dashboard placeholder) | 2 dias             |
+| Testes (unit + integração + e2e)                          | 2 dias             |
+| CI/CD workflows                                           | 1 dia              |
+| Observabilidade + logger redaction                        | 1 dia              |
+| Documentação final                                        | 0.5 dia            |
+| **Total**                                                 | **~13 dias uteis** |
 
 Para 1 dev full-time: ~2.5 semanas.
 Para 2 devs (1 backend + 1 frontend): ~1.5 semanas.
@@ -364,14 +365,14 @@ Para 2 devs (1 backend + 1 frontend): ~1.5 semanas.
 
 ## Riscos e mitigações
 
-| Risco | Mitigação |
-|---|---|
-| Curva de aprendizado do Ory Kratos + Hydra | Pair programming inicial, runbook especifico |
-| Bugs sutis de RLS (algum caminho esquece `SET LOCAL app.account_id`) | Testes de isolamento obrigatorios + checklist em PR |
-| Single-session pode frustrar usuarios | UX clara: aviso ao revogar sessão anterior |
-| MFA atrapalha onboarding | Banner recomenda, mas nao obriga |
-| Neon latency de regiao unica | Aceitar no MVP; replicacao para regiao BR (PRECISA DE VALIDACAO) |
-| Tempo de setup do monorepo | Script `bootstrap.sh` automatizado |
+| Risco                                                                | Mitigação                                                        |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Curva de aprendizado do Ory Kratos + Hydra                           | Pair programming inicial, runbook especifico                     |
+| Bugs sutis de RLS (algum caminho esquece `SET LOCAL app.account_id`) | Testes de isolamento obrigatorios + checklist em PR              |
+| Single-session pode frustrar usuarios                                | UX clara: aviso ao revogar sessão anterior                       |
+| MFA atrapalha onboarding                                             | Banner recomenda, mas nao obriga                                 |
+| Neon latency de regiao unica                                         | Aceitar no MVP; replicacao para regiao BR (PRECISA DE VALIDACAO) |
+| Tempo de setup do monorepo                                           | Script `bootstrap.sh` automatizado                               |
 
 ---
 
@@ -393,6 +394,7 @@ Quando aprovado, sponsor emite:
 > **Classificação:** CORE V1.
 
 Após autorização:
+
 1. Atualizar `master-plan.md`: `EXE-001` → `EM_ANDAMENTO` (codigo).
 2. Atualizar `CHANGELOG.md`: entrada da Sprint 1 com data.
 3. Criar branch `sprint/001-foundation`.

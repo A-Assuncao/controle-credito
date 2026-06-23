@@ -18,15 +18,18 @@ Necessário provedor transacional com boa deliverability e observabilidade de bo
 ## Consequências
 
 **Positivas:**
+
 - Foco em transacional (alta deliverability).
 - Observabilidade de entrega nativa.
 - API simples e estável.
 
 **Negativas:**
+
 - Custo por mensagem (R$ viável em SaaS pequeno).
 - Vendor lock-in moderado (templates podem ser migrados para SES/SendGrid).
 
 **Mitigação:**
+
 - Adapter pattern: `EmailProvider` interface, Postmark como implementação padrão.
 - Fallback SES configurável em `IntegrationConfig` por tenant (avaliação `FUTURO`).
 

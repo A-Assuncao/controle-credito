@@ -19,15 +19,18 @@ Seção 13 do plano sugere RLS como "camada opcional adicional (defesa em profun
 ## Consequências
 
 **Positivas:**
+
 - Elimina classe de bugs: mesmo com falha na aplicação, banco recusa leitura cruzada.
 - Atende NFR-06 (testes automatizados de isolamento).
 - Auxilia conformidade LGPD (controle de acesso no nível mais baixo).
 
 **Negativas:**
+
 - Overhead de manutenção de policies.
 - Risco de bypass acidental se algum role tiver `BYPASSRLS = true`.
 
 **Mitigação:**
+
 - Documentação explícita em `docs/security-model.md` sobre roles e policies.
 - Auditoria periódica de roles e policies via script SQL.
 - Teste em CI falha build se detectar `BYPASSRLS = true` em role de aplicação.

@@ -88,10 +88,10 @@ async function main() {
       try {
         await client.query('BEGIN');
         await client.query(sql);
-        await client.query(
-          'INSERT INTO __migrations__ (filename, checksum) VALUES ($1, $2)',
-          [filename, checksum],
-        );
+        await client.query('INSERT INTO __migrations__ (filename, checksum) VALUES ($1, $2)', [
+          filename,
+          checksum,
+        ]);
         await client.query('COMMIT');
         appliedCount++;
       } catch (err) {
@@ -101,7 +101,9 @@ async function main() {
       }
     }
 
-    console.info(`\nOK: ${appliedCount} aplicada(s), ${skippedCount} pulada(s), total ${files.length}.`);
+    console.info(
+      `\nOK: ${appliedCount} aplicada(s), ${skippedCount} pulada(s), total ${files.length}.`,
+    );
   } finally {
     await client.end();
   }

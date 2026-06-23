@@ -47,7 +47,7 @@ export function roundHalfEven(value: number): number {
  * AMBOS virgula e ponto, o ultimo separador eh o decimal.
  */
 export function fromBrl(input: string): Cents {
-  const cleaned = input.replace(/[^\d,.\-]/g, '');
+  const cleaned = input.replace(/[^\d,.-]/g, '');
   if (!cleaned) {
     throw new Error(`BRL invalido: ${input}`);
   }
@@ -85,6 +85,6 @@ export function formatBrl(value: Cents): string {
     style: 'currency',
     currency: 'BRL',
   }).format(reais);
-  // Normaliza NBSP ( ) e narrow NBSP ( ) para espaco comum
-  return formatted.replace(/[  ]/g, ' ');
+  // Normaliza NBSP (U+00A0) e narrow NBSP (U+202F) para espaco comum
+  return formatted.replace(/[\u00A0\u202F]/g, ' ');
 }
