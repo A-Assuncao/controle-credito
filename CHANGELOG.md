@@ -40,6 +40,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   - Varios arquivos: CRLF → LF (prettier + ESLint 10 `prettier/prettier`).
   - Varios arquivos: ajustes de formatacao automatica via `prettier --write`.
 - `.github/workflows/ci.yml`: `pnpm/action-setup` v4 → v6, `version: 9 → 11`, `node-version: 22 → 24`. Postgres 18 e Redis 7 mantidos.
+- `apps/api/package.json`: `@nestjs/{common,core,platform-express,testing}` `^10.4.4` → `^11.1.6`. Compatibilidade de engines confirmada (`engines.node >= 20` no NestJS 11); sem breaking changes no código atual. Suite e2e (16/16) e unit (5/5) verde localmente.
 
 ---
 
