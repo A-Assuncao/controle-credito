@@ -1,6 +1,6 @@
 import { randomBytes, createHash } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
-import { redis } from '@controle-credito/infra';
+import { env, redis } from '@controle-credito/infra';
 
 /**
  * Gerencia refresh tokens em Redis.
@@ -8,7 +8,7 @@ import { redis } from '@controle-credito/infra';
  * Convenção:
  *   chave    = `refresh:{user_id}`
  *   valor    = sha256(refresh_token_bruto) em hex
- *   TTL      = 30 dias
+ *   TTL      = SESSION_TTL_HOURS env (default 12h)
  *
  * Fluxo:
  *   1. login/signup: gera refresh aleatorio (32 bytes), salva hash em Redis, devolve o bruto.
@@ -24,8 +24,11 @@ import { redis } from '@controle-credito/infra';
  */
 @Injectable()
 export class RefreshTokenService {
-  private static readonly TTL_SECONDS = 30 * 24 * 60 * 60; // 30 dias
   private static readonly KEY_PREFIX = 'refresh:';
+
+  private get ttlSeconds(): number {
+    return env.SESSION_TTL_HOURS * 60 * 60;
+  }
 
   /**
    * Gera um refresh token novo, persiste o hash no Redis e devolve o bruto.
@@ -33,12 +36,7 @@ export class RefreshTokenService {
   async issue(userId: string): Promise<string> {
     const token = randomBytes(32).toString('base64url');
     const hash = this.hash(token);
-    await redis.set(
-      `${RefreshTokenService.KEY_PREFIX}${userId}`,
-      hash,
-      'EX',
-      RefreshTokenService.TTL_SECONDS,
-    );
+    await redis.set(`${RefreshTokenService.KEY_PREFIX}${userId}`, hash, 'EX', this.ttlSeconds);
     return token;
   }
 

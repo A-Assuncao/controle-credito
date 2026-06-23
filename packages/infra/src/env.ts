@@ -23,6 +23,13 @@ const EnvSchema = z.object({
   NEXTAUTH_SECRET: z.string().min(32, 'NEXTAUTH_SECRET precisa ter >= 32 chars'),
   NEXTAUTH_URL: z.string().url(),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET precisa ter >= 32 chars'),
+  /**
+   * TTL do refresh token em horas. Access token fica em 15min (TokenService).
+   * Default 12h: refresh longo o suficiente para renovacao automatica via
+   * NextAuth, curto o suficiente para forcar novo login diario se o device
+   * for comprometido.
+   */
+  SESSION_TTL_HOURS: z.coerce.number().int().positive().default(12),
 
   EMAIL_PROVIDER_API_KEY: z.string().optional(),
   SMS_PROVIDER_API_KEY: z.string().optional(),
