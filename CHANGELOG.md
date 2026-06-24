@@ -5,6 +5,23 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [Unreleased - Sprint 3] - 2026-06-24
+
+Sprint 3 - EXE-002 (Contratos + parcelas + recebimentos) iniciada.
+Plano detalhado em `docs/sprint-3-plan.md`. Marcos:
+
+- EXE-002.1: Motor de cálculo (packages/domain) - foundation
+- EXE-002.2: Migrations (contracts, installments, payments, product_schemas)
+- EXE-002.3: API REST (7 endpoints)
+- EXE-002.4: Frontend (3 páginas)
+
+### Adicionado
+
+- **`docs/sprint-3-plan.md`** - plano detalhado da EXE-002 (similar a `docs/sprint-1-plan.md`).
+- **`docs/master-plan.md`** atualizado: EXE-001 → `VALIDADO`, EXE-002 → `EM_ANDAMENTO`.
+
+---
+
 ## [1.2.8-hotfix] - 2026-06-24
 
 Hotfix: CI Docker continua falhando apos 1.2.7 (apps/contracts
