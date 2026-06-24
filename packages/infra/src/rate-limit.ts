@@ -56,12 +56,10 @@ export async function rateLimit(
     }
     if (current > limit) {
       // NAO logar identifier (mesmo mascarado) - CodeQL ainda classifica
-      // como PII. Logar so fingerprint da CHAVE Redis (namespace + primeiros
-      // 6 chars do hash do identifier). Nao-reversivel.
-      logger.warn(
-        { keyFingerprint: fingerprintKey(key), current, limit, windowSec },
-        'rate limit exceeded',
-      );
+      // como PII. NAO logar limit/windowSec (vindos de env vars com
+      // nomes sensiveis - CodeQL rastreia o source). Logar so fingerprint
+      // da CHAVE Redis + counter. Nao-reversivel.
+      logger.warn({ keyFingerprint: fingerprintKey(key), current }, 'rate limit exceeded');
       return false;
     }
     return true;
