@@ -5,6 +5,33 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.2.5-hotfix] - 2026-06-24
+
+Hotfix: warnings/erros observados nos logs de producao (Vercel + Render)
+apos deploys 1.2.1-1.2.4.
+
+### Fixed
+
+- **`apps/api/src/modules/common/filters/all-exceptions.filter.ts`** -
+  defensive `req.correlationId ?? randomUUID()`. Antes, se a exception
+  ocorresse ANTES do `AccountContextMiddleware` rodar (CORS preflight,
+  body parser), o `res.setHeader('x-correlation-id', undefined)` lancava
+  `ERR_HTTP_INVALID_HEADER_VALUE` e mascarava o erro real.
+- **`apps/web/next.config.ts`** - `sourcemaps.disable: !process.env.SENTRY_AUTH_TOKEN`.
+  Sem isso, o build do Vercel logava 2 warnings
+  `[@sentry/nextjs] No auth token provided. Will not create release.`
+  mesmo sem Sentry configurado. Agora silencioso quando nao ha config.
+
+### No-op
+
+- Render `/health` intermitente retornando 503: Neon free tier auto-suspende
+  branches apos 5min idle. Primeira query apos resume demora ~5s (timeout do
+  health). Workaround futuro: configurar `pg.Pool` com
+  `connectionTimeoutMillis: 3000` no Render. Por enquanto eh' raro e
+  auto-recupera.
+
+---
+
 ## [1.2.4-hotfix] - 2026-06-24
 
 Hotfix: apos deploys 1.2.1-1.2.3, Vercel (frontend) retornava 500 em

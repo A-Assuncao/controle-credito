@@ -7,6 +7,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
 import { logger } from '@controle-credito/infra';
 
 /**
@@ -28,7 +29,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const req = ctx.getRequest<Request>();
     const res = ctx.getResponse<Response>();
-    const correlationId = req.correlationId;
+    // Defensive: req.correlationId pode ser undefined se a exception
+    // ocorre ANTES do AccountContextMiddleware rodar (CORS preflight,
+    // body parser, etc). Fallback para randomUUID() garante header
+    // sempre valido + correlationId sempre presente na response.
+    const correlationId = req.correlationId ?? randomUUID();
 
     // Garante header em toda resposta de erro (sucesso vem do middleware).
     res.setHeader('x-correlation-id', correlationId);
