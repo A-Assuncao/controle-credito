@@ -18,7 +18,8 @@
 #   docker build -t ghcr.io/a-assuncao/controle-credito-api:dev -f apps/api/Dockerfile .
 #   docker run -p 3001:3001 --env-file .env ghcr.io/.../api:dev
 #
-# CI usa esse mesmo Dockerfile (ver .github/workflows/ci.yml).
+# CI usa esse mesmo Dockerfile (ver .github/workflows/ci-docker.yml).
+
 ARG NODE_VERSION=24
 ARG PNPM_VERSION=11
 
@@ -44,14 +45,16 @@ RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 WORKDIR /repo
 
 # Copia manifests primeiro pra melhor cache de layers Docker.
+# apps/contracts e apps/web NAO sao deps de apps/api - nao copiamos.
+# (Erro passado: `2>/dev/null || true` em COPY nao eh' valido em
+# Docker - eh' shell syntax, nao Docker syntax. Causava
+# "failed to compute cache key" no BuildKit.)
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/api/package.json ./apps/api/
-COPY apps/contracts/package.json ./apps/contracts/ 2>/dev/null || true
-COPY apps/web/package.json ./apps/web/ 2>/dev/null || true
 COPY packages/contracts/package.json ./packages/contracts/
 COPY packages/domain/package.json ./packages/domain/
 COPY packages/infra/package.json ./packages/infra/
-COPY packages/ui/package.json ./packages/ui/ 2>/dev/null || true
+COPY packages/ui/package.json ./packages/ui/
 
 # Instala TODAS as deps (incluindo devDeps) - builder precisa.
 RUN pnpm install --frozen-lockfile

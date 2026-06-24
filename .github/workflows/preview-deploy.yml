@@ -183,8 +183,10 @@ jobs:
   trigger-vercel:
     name: Trigger Vercel deploy
     needs: [detect-changes, create-neon-branch, cleanup-neon-branch]
-    if: always() && needs.detect-changes.outputs.web-changed == 'true' && github.event.action != 'closed'
-    if: needs.cleanup-neon-branch.result != 'success' && needs.cleanup-neon-branch.result != 'skipped' && always()
+    # Roda se web mudou E NAO estamos fechando o PR. O `always()` eh'
+    # necessario pq cleanup-neon-branch pode ter rodado, mas
+    # queremos que trigger-vercel pule no close (acao diferente).
+    if: needs.detect-changes.outputs.web-changed == 'true' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Vercel deploy hook
@@ -279,15 +281,19 @@ jobs:
           VERCEL_PR_URL: ${{ vars.VERCEL_PR_URL_PREFIX || format('https://controle-credito-pr-{0}.vercel.app', github.event.pull_request.number) }}
           RENDER_PR_URL: ${{ vars.RENDER_PR_URL_PREFIX || format('https://controle-credito-api-pr-{0}.onrender.com', github.event.pull_request.number) }}
         run: |
-          BODY=$(cat <<EOF
-| Service | URL |
-| --- | --- |
-| Web (Vercel) | ${VERCEL_PR_URL} |
-| API (Render) | ${RENDER_PR_URL} |
-| Neon DB | branch \`preview-pr-${PR_NUMBER}\` |
-EOF
-          )
+          # Constroi body do comentario usando here-string (simples,
+          # sem heredoc pra evitar problemas de escape no YAML literal).
+          VERCEL_URL="$VERCEL_PR_URL"
+          RENDER_URL="$RENDER_PR_URL"
+          PR_NUM="$PR_NUMBER"
 
           # Usa gh CLI pra comentar (mais simples que curl).
-          echo "$BODY" | gh pr comment "$PR_NUMBER" --body-file - || true
-          echo "PR #${PR_NUMBER} comentado com URLs de preview"
+          {
+            echo "| Service | URL |"
+            echo "| --- | --- |"
+            echo "| Web (Vercel) | ${VERCEL_URL} |"
+            echo "| API (Render) | ${RENDER_URL} |"
+            echo "| Neon DB | branch preview-pr-${PR_NUM} |"
+          } | gh pr comment "$PR_NUM" --body-file - || true
+
+          echo "PR #${PR_NUM} comentado com URLs de preview"
