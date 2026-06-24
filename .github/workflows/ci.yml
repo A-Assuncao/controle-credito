@@ -46,11 +46,13 @@ jobs:
           --health-retries 5
 
     env:
-      # Conexoes nos services. O host padrao de services do GitHub Actions
-      # eh o nome do servico (postgres, redis), nao localhost.
-      DATABASE_URL: postgres://app:app@postgres:5432/controle_credito_test
-      DATABASE_URL_TEST: postgres://app:app@postgres:5432/controle_credito_test
-      DATABASE_URL_SYSTEM: postgres://app:app@postgres:5432/controle_credito_test
+      # Conexoes nos services. O job roda no runner (nao em container),
+      # entao acessamos via localhost:5432 (port mapping do service).
+      # O hostname 'postgres' do service DNS eh' flaky - ja' causou
+      # 'Temporary failure in name resolution' no run #28067640965.
+      DATABASE_URL: postgres://app:app@localhost:5432/controle_credito_test
+      DATABASE_URL_TEST: postgres://app:app@localhost:5432/controle_credito_test
+      DATABASE_URL_SYSTEM: postgres://app:app@localhost:5432/controle_credito_test
       REDIS_URL: redis://redis:6379
       NEXTAUTH_SECRET: test-secret-test-secret-test-secret-test-secret-aaaa
       NEXTAUTH_URL: http://localhost:3000
@@ -98,19 +100,39 @@ jobs:
         # suficiente para o CI baseline.
         run: pnpm test
 
+      - name: Install postgresql-client (psql + pg_isready)
+        # ubuntu-latest vem SEM postgresql-client. Precisamos pra rodar
+        # psql nos steps de Setup/Verify RLS. ~10s de install.
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
       - name: Setup test DB (migrations + role + grants)
-        # Prepara o test DB: roda migrations como app, depois cria app_system
-        # com BYPASSRLS e da os GRANTs necessarios.
+        # Prepara o test DB: cria app_system com BYPASSRLS e da os GRANTs
+        # necessarios. Host: localhost (port mapping do service).
         env:
           PGPASSWORD: app
         run: |
+          # Espera Postgres aceitar queries reais. Usa 'psql -c SELECT 1'
+          # porque eh' mais robusto que pg_isready (testa o caminho
+          # completo TCP + auth + query, nao so' socket).
+          for i in $(seq 1 30); do
+            if psql -h localhost -p 5432 -U app -d controle_credito_test -c "SELECT 1" -q -tA >/dev/null 2>&1; then
+              echo "Postgres ready after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+          if ! psql -h localhost -p 5432 -U app -d controle_credito_test -c "SELECT 1" -q -tA >/dev/null 2>&1; then
+            echo "::error::Postgres nao ficou pronto em 30s"
+            exit 1
+          fi
+
           # Criar role app_system com BYPASSRLS (nao tem no init.sql padrao).
-          psql -h postgres -U app -d controle_credito_test -c "CREATE USER app_system WITH PASSWORD 'app_system' BYPASSRLS NOSUPERUSER;"
+          psql -h localhost -U app -d controle_credito_test -c "CREATE USER app_system WITH PASSWORD 'app_system' BYPASSRLS NOSUPERUSER;"
           # Grants minimos para o systemPool (signup + seed da e2e).
-          psql -h postgres -U app -d controle_credito_test -c "GRANT CONNECT ON DATABASE controle_credito_test TO app_system;"
-          psql -h postgres -U app -d controle_credito_test -c "GRANT USAGE ON SCHEMA public TO app_system;"
-          psql -h postgres -U app -d controle_credito_test -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_system;"
-          psql -h postgres -U app -d controle_credito_test -c "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_system;"
+          psql -h localhost -U app -d controle_credito_test -c "GRANT CONNECT ON DATABASE controle_credito_test TO app_system;"
+          psql -h localhost -U app -d controle_credito_test -c "GRANT USAGE ON SCHEMA public TO app_system;"
+          psql -h localhost -U app -d controle_credito_test -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_system;"
+          psql -h localhost -U app -d controle_credito_test -c "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_system;"
 
       - name: Apply migrations
         run: pnpm db:migrate
@@ -123,7 +145,7 @@ jobs:
         env:
           PGPASSWORD: app
         run: |
-          SUPER=$(psql -h postgres -U app -d controle_credito_test -tA -c "SELECT rolsuper FROM pg_roles WHERE rolname='app'")
+          SUPER=$(psql -h localhost -U app -d controle_credito_test -tA -c "SELECT rolsuper FROM pg_roles WHERE rolname='app'")
           if [ "$SUPER" = "t" ]; then
             echo "::warning::Role 'app' is SUPERUSER - RLS is being bypassed. See rls-hardening-app_system memory."
           fi
