@@ -32,8 +32,27 @@ const EnvSchema = z.object({
   SESSION_TTL_HOURS: z.coerce.number().int().positive().default(12),
 
   EMAIL_PROVIDER_API_KEY: z.string().optional(),
+  EMAIL_PROVIDER_FROM: z.string().default('noreply@controle-credito.local'),
   SMS_PROVIDER_API_KEY: z.string().optional(),
   SMS_PROVIDER_FROM: z.string().optional(),
+
+  /**
+   * TTL do token de recovery de senha. Default 1h - balanceado entre
+   * seguranca (tokens curtos) e UX (tempo de user ver o email).
+   */
+  RECOVERY_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(3600),
+  /**
+   * Rate limit do forgot-password: 3 requests por janela (anti-spam).
+   */
+  RATE_LIMIT_FORGOT_PASSWORD: z.coerce.number().int().positive().default(3),
+  /**
+   * Rate limit do reset-password: 5 requests por janela (anti-brute-force).
+   */
+  RATE_LIMIT_RESET_PASSWORD: z.coerce.number().int().positive().default(5),
+  /**
+   * Janela do rate limit em segundos. Default 15min.
+   */
+  RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().positive().default(900),
 
   SENTRY_DSN: z.string().url().optional(),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),

@@ -5,6 +5,57 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.2.0-recovery] - 2026-06-24
+
+Sprint 2 / item 1: recuperacao de senha via email (link magico). PR mergeado: #10.
+
+### Adicionado
+
+- **Recuperacao de senha via email (link magico)** no apps/api e apps/web.
+  - `POST /auth/forgot-password` - solicita reset. Sempre retorna 204 (anti-enumeracao).
+  - `GET  /auth/reset-password/validate?token=...` - valida token, retorna email mascarado (`u***@e***.com`).
+  - `POST /auth/reset-password` - atualiza senha, revoga todas as sessoes, deleta token.
+  - Token: 32 bytes random, base64url (43 chars), TTL 1h, single-use, SHA-256 hashed antes de salvar no Redis.
+  - Rate limit: 3/15min por IP em `forgot-password`, 3/15min por email, 5/15min por IP em `reset-password`.
+  - Senha forte: min 12 chars + 4 classes (upper, lower, digit, special).
+  - Paginas em apps/web: `/forgot-password` e `/reset-password` (publicas, server actions).
+  - Link "Esqueci minha senha" adicionado em `/login`.
+- **EmailService interface** em `packages/infra/src/email.ts` com 2 implementacoes:
+  - `ConsoleEmailService` (dev/test) - loga no stdout.
+  - `ProviderEmailService` (prod) - stub. Provider concreto (Postmark/Resend) fica pra task separada.
+- **Helper `rateLimit(namespace, identifier, limit, windowSec)`** em `packages/infra/src/rate-limit.ts`. Redis-based, fail-open.
+- **Helpers `generateRecoveryToken()` + `hashRecoveryToken(token)`** em `packages/infra/src/recovery-token.ts`. Crypto random + SHA-256.
+- **Novas env vars**: `EMAIL_PROVIDER_FROM` (default `noreply@controle-credito.local`), `RECOVERY_TOKEN_TTL_SECONDS` (default 3600), `RATE_LIMIT_FORGOT_PASSWORD` (default 3), `RATE_LIMIT_RESET_PASSWORD` (default 5), `RATE_LIMIT_WINDOW_SECONDS` (default 900).
+- **`UsersRepository.updatePassword(accountId, userId, newHash)`** - RLS-safe.
+
+### Changed
+
+- **`IdentityModule`** agora registra `RecoveryService` e `RecoveryController`.
+
+### Security
+
+- **Anti-enumeracao**: `forgot-password` sempre retorna 204 (mesma UI/response para email valido/invalido/inexistente). Tempo de resposta similar via dummy `argon2.verify` quando user nao existe.
+- **Token single-use**: deletado do Redis apos uso. Re-uso retorna erro.
+- **Revogacao de sessoes**: apos reset, `updateLastSessionRevokedAt(now)` + `refresh.revoke(userId)`. User precisa logar de novo em todos devices.
+- **Mascaramento de email na tela de reset**: `m***@e***.com` (mostra o suficiente pra confirmar sem vazar).
+- **Hash do token antes de salvar**: SHA-256. Se Redis vazar, tokens nao sao diretamente usaveis.
+- **Senha forte obrigatoria** (zod schema): 12+ chars + 4 classes (upper, lower, digit, special).
+
+### Mudanca de escopo vs. master-plan
+
+- **Master-plan previa "e-mail + celular" (duplo fator de recovery)** - linha 264 do master-plan, sprint 1.5 item 16.
+- **Sprint 2 v1 implementa so' e-mail** (decisao do usuario, 2026-06-24).
+- **SMS recovery fica pra Sprint 2 v2** (decisao de produto a confirmar antes).
+
+### Deferred to Sprint 2 v2
+
+- SMS recovery (recuperacao por celular).
+- Provider concreto de email (Postmark/Resend) - integracao real.
+- Rate limit em outras rotas publicas (`/auth/login`, `/auth/refresh`).
+- Lockout apos N tentativas falhas.
+
+---
+
 ## [1.1.0-sast] - 2026-06-24
 
 Sprint 1.5 / fechamento de diferidos da Sprint 1. Encerramento: 9/9 itens.

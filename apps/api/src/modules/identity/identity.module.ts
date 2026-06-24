@@ -8,6 +8,8 @@ import { AuthController } from './auth/auth.controller.js';
 import { RefreshTokenService } from './auth/refresh-token.service.js';
 import { MfaService } from './mfa/mfa.service.js';
 import { MfaController } from './mfa/mfa.controller.js';
+import { RecoveryService } from './recovery/recovery.service.js';
+import { RecoveryController } from './recovery/recovery.controller.js';
 
 /**
  * Modulo de identidade. Reune:
@@ -18,9 +20,10 @@ import { MfaController } from './mfa/mfa.controller.js';
  * - AuthService + AuthController: login/refresh/logout
  * - RefreshTokenService: Redis CRUD de refresh tokens
  * - MfaService + MfaController: setup/verify/disable TOTP
+ * - RecoveryService + RecoveryController: forgot-password / reset-password via email
  */
 @Module({
-  controllers: [AuthController, MfaController],
+  controllers: [AuthController, MfaController, RecoveryController],
   providers: [
     TokenService,
     AuthGuard,
@@ -29,6 +32,7 @@ import { MfaController } from './mfa/mfa.controller.js';
     AuthService,
     RefreshTokenService,
     MfaService,
+    RecoveryService,
   ],
   exports: [TokenService, AuthGuard, MfaGuard, UsersRepository],
 })
