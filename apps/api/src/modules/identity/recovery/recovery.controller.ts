@@ -47,6 +47,15 @@ export class RecoveryController {
     @Body(new ZodValidationPipe(ForgotPasswordBodySchema)) body: ForgotPasswordBody,
     @Req() req: Request,
   ): Promise<void> {
+    // Zod garante que body.email eh string, mas o type narrowing do
+    // TypeScript pode nao pegar (Express body pode vir como string|array).
+    // Forcar string pra evitar type confusion (CodeQL achou isso).
+    const email = Array.isArray(body.email) ? body.email[0]! : body.email;
+    if (typeof email !== 'string' || email === '') {
+      // Email invalido - sem throw (anti-enumeracao). Apenas retorna 204.
+      return;
+    }
+
     // Rate limit por IP + por email (defesa em profundidade).
     const ip = getRequestIp(req as Parameters<typeof getRequestIp>[0]);
     const ipOk = await rateLimit(
@@ -63,7 +72,7 @@ export class RecoveryController {
     }
     const emailOk = await rateLimit(
       'forgot-password:email',
-      body.email.toLowerCase(),
+      email.toLowerCase(),
       env.RATE_LIMIT_FORGOT_PASSWORD,
       env.RATE_LIMIT_WINDOW_SECONDS,
     );
@@ -74,17 +83,22 @@ export class RecoveryController {
       });
     }
 
-    await this.recovery.requestReset(body.email);
+    await this.recovery.requestReset(email);
     // 204 sempre - anti-enumeracao.
   }
 
   @Public()
   @Get('reset-password/validate')
-  async validateToken(@Query('token') token: string | undefined): Promise<ValidateTokenResponse> {
-    if (token == null || token.length < 20) {
+  async validateToken(
+    @Query('token') token: string | string[] | undefined,
+  ): Promise<ValidateTokenResponse> {
+    // Express query pode vir como string OU string[] (mesma URL com
+    // ?token=a&token=b). CodeQL flagou type confusion - forcar string.
+    const tokenStr = Array.isArray(token) ? token[0] : token;
+    if (tokenStr == null || typeof tokenStr !== 'string' || tokenStr.length < 20) {
       return { valid: false };
     }
-    const result = await this.recovery.validateToken(token);
+    const result = await this.recovery.validateToken(tokenStr);
     if (result == null) {
       return { valid: false };
     }
