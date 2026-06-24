@@ -159,4 +159,15 @@ export class UsersRepository {
       await client.query(`UPDATE users SET full_name = $2 WHERE id = $1`, [userId, fullName]);
     });
   }
+
+  /**
+   * Atualiza password_hash. Usado por RecoveryService apos reset de
+   * senha. RLS garante que so' podemos atualizar user do proprio
+   * account_id.
+   */
+  async updatePassword(accountId: string, userId: string, newHash: string): Promise<void> {
+    await withAccountContext(accountId, async (client) => {
+      await client.query(`UPDATE users SET password_hash = $2 WHERE id = $1`, [userId, newHash]);
+    });
+  }
 }

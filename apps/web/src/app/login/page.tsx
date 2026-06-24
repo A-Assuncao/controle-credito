@@ -74,6 +74,12 @@ export default async function LoginPage(): Promise<ReactElement> {
         >
           Entrar
         </button>
+
+        <p className="text-center text-sm text-slate-500">
+          <a href="/forgot-password" className="text-blue-600 hover:text-blue-700">
+            Esqueci minha senha
+          </a>
+        </p>
       </form>
     </main>
   );
