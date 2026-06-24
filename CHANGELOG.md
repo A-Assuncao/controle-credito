@@ -45,6 +45,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 - `apps/web/package.json`: `next ^15.0.0 → ^16.2.9`, `next-auth 5.0.0-beta.20 → 5.0.0-beta.31` (peer aceita Next 16 oficialmente). Script `lint`: `next lint` → `eslint src` (Next 16 removeu `next lint`).
 - `apps/web/src/middleware.ts` → `apps/web/src/proxy.ts` (rename obrigatorio no Next 16). Conteudo preservado (`auth()` do NextAuth funciona identico no `proxy.ts`).
 - `package.json` (raiz): adicionado `@playwright/test` deps para Chromium e deps de sistema instaladas via `apt install -y libnspr4 libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2t64` no WSL Ubuntu (Chromium headless).
+- **TypeScript `^5.6.2 → ^5.9.3`** em `package.json` (raiz), `apps/api/package.json`, `apps/web/package.json`, `packages/{contracts,domain,infra,ui}/package.json`. Alinhado com a versao usada pela propria NestJS 11. Sem breaking changes no codigo; typecheck/lint/test continuam 100% verde.
 
 ---
 
