@@ -38,6 +38,12 @@ const EnvSchema = z.object({
   SENTRY_DSN: z.string().url().optional(),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
   SENTRY_ENVIRONMENT: z.string().default('development'),
+  /**
+   * Fração de requests com trace sample (0 = nenhum, 1 = todos).
+   * Default 0.1 (10%) é o recomendado pelo Sentry pra prod.
+   * Em dev/CI sem SENTRY_DSN, este valor é ignorado.
+   */
+  SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0.1),
 
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
 });
