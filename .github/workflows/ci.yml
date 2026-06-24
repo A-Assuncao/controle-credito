@@ -104,6 +104,22 @@ jobs:
         env:
           PGPASSWORD: app
         run: |
+          # Espera o Postgres estar realmente aceitando conexoes. O healthcheck
+          # do service garante que o `pg_isready` retorna 0, mas pode haver
+          # delay entre esse sinal e o socket estar realmente aberto para
+          # receber queries. Loop com timeout de 30s.
+          for i in $(seq 1 30); do
+            if pg_isready -h postgres -p 5432 -U app -d controle_credito_test -q; then
+              echo "Postgres ready after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+          if ! pg_isready -h postgres -p 5432 -U app -d controle_credito_test -q; then
+            echo "::error::Postgres nao ficou pronto em 30s"
+            exit 1
+          fi
+
           # Criar role app_system com BYPASSRLS (nao tem no init.sql padrao).
           psql -h postgres -U app -d controle_credito_test -c "CREATE USER app_system WITH PASSWORD 'app_system' BYPASSRLS NOSUPERUSER;"
           # Grants minimos para o systemPool (signup + seed da e2e).
