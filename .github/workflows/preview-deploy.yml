@@ -106,11 +106,18 @@ jobs:
           # API Neon: POST /api/v2/projects/{project_id}/branches
           # Body: { branch: { name, parent_id } } - parent_id = branch principal.
           # Para simplificar, criamos sem parent_id (usa main por default).
+          #
+          # Por que printf em vez de heredoc: bash dentro de aspas
+          # duplas escapa \" mas mantem como string. printf com single
+          # quotes escapa corretamente e o %s eh substituido. Tambem
+          # evita problemas de indentacao YAML (heredoc com { no inicio
+          # quebra actionlint/YAML parser).
+          BODY=$(printf '{"branch":{"name":"%s","parent_id":null}}' "${BRANCH_NAME}")
           RESPONSE=$(curl -sS -X POST \
             "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches" \
             -H "Authorization: Bearer ${NEON_API_KEY}" \
             -H "Content-Type: application/json" \
-            -d "{\"branch\":{\"name\":\"${BRANCH_NAME}\",\"parent_id\":null}}")
+            -d "$BODY")
 
           BRANCH_ID=$(echo "$RESPONSE" | jq -r '.branch.id')
           CONNECTION_STRING=$(echo "$RESPONSE" | jq -r '.branch.connection_string')

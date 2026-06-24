@@ -5,6 +5,75 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.2.7-hotfix] - 2026-06-24
+
+Hotfix: 2 erros de CI descobertos apos 1.2.6.
+
+### Fixed
+
+- **`.github/workflows/preview-deploy.yml`**: heredoc bash com JSON
+  na mesma indentacao quebrava YAML parser (actionlint). O `{` no
+  inicio da linha era interpretado como chave YAML esperando `:`.
+  Fix: substituir heredoc por `printf '%s'` que nao tem problema
+  de indentacao.
+- **`apps/web/Dockerfile`**: `COPY apps/contracts/package.json
+  ./apps/contracts/` tentava copiar arquivo de diretorio que NAO
+  EXISTE (so' `packages/contracts/` na raiz). Bug antigo: a tentativa
+  original de tolerar ausencia usava `2>/dev/null || true` (shell
+  syntax, nao Docker) - commit `fc6c81f` removeu isso mas deixou
+  a linha, causando falha permanente. Fix: remover a linha espuria.
+
+---
+
+## [1.2.6-hotfix] - 2026-06-24
+
+Hotfix: CI 100% vermelho em todos os PRs recentes. 2 problemas.
+
+### Fixed
+
+- **`.gitattributes` (NOVO)**: `* text=auto eol=lf`. Força LF em
+  todos os arquivos de texto do repo. Sem isso, devs em Windows
+  editam arquivos e commita com CRLF, fazendo Prettier reportar
+  "Delete \r" em 800+ lugares. A longo prazo resolve a fonte do
+  problema (nao apenas os sintomas).
+- **`packages/infra/src/env.ts`**: quebra de linha do enum NODE_ENV
+  (5 valores nao cabem em <100 chars). Prettier queria.
+- **`apps/api/src/main.ts`** + **`apps/web/next-env.d.ts`**:
+  reformatação Prettier (auto-fix de CRLF, espacamento).
+- **`.github/workflows/preview-deploy.yml`**: bug no body do curl
+  Neon API. `-d "{\"parent_id\":null}"` enviava "parent_id":"null"
+  (string) em vez de null JSON. API rejeitava com 400. Fix: heredoc
+  + variavel BODY para garantir null real.
+
+---
+
+## [1.2.5-hotfix] - 2026-06-24
+
+Hotfix: warnings/erros observados nos logs de producao (Vercel + Render)
+apos deploys 1.2.1-1.2.4.
+
+### Fixed
+
+- **`apps/api/src/modules/common/filters/all-exceptions.filter.ts`** -
+  defensive `req.correlationId ?? randomUUID()`. Antes, se a exception
+  ocorresse ANTES do `AccountContextMiddleware` rodar (CORS preflight,
+  body parser), o `res.setHeader('x-correlation-id', undefined)` lancava
+  `ERR_HTTP_INVALID_HEADER_VALUE` e mascarava o erro real.
+- **`apps/web/next.config.ts`** - `sourcemaps.disable: !process.env.SENTRY_AUTH_TOKEN`.
+  Sem isso, o build do Vercel logava 2 warnings
+  `[@sentry/nextjs] No auth token provided. Will not create release.`
+  mesmo sem Sentry configurado. Agora silencioso quando nao ha config.
+
+### No-op
+
+- Render `/health` intermitente retornando 503: Neon free tier auto-suspende
+  branches apos 5min idle. Primeira query apos resume demora ~5s (timeout do
+  health). Workaround futuro: configurar `pg.Pool` com
+  `connectionTimeoutMillis: 3000` no Render. Por enquanto eh' raro e
+  auto-recupera.
+
+---
+
 ## [1.2.4-hotfix] - 2026-06-24
 
 Hotfix: apos deploys 1.2.1-1.2.3, Vercel (frontend) retornava 500 em

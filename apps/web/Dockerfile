@@ -29,14 +29,13 @@ RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 WORKDIR /repo
 
 # Copia manifests primeiro (cache de layer).
-# apps/contracts e apps/api sao deps de packages/contracts - copiamos
-# pra resolver symlinks corretamente.
+# apps/contracts NAO eh' dep de web - e NAO existe (so' packages/contracts/).
+# O Dockerfile do api (linha 48) ja documentou isso pro app inverso.
 # (Erro passado: `2>/dev/null || true` em COPY nao eh' valido em
 # Docker - eh' shell syntax, nao Docker syntax. Causava
 # "failed to compute cache key" no BuildKit.)
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/api/package.json ./apps/api/
-COPY apps/contracts/package.json ./apps/contracts/
 COPY apps/web/package.json ./apps/web/
 COPY packages/contracts/package.json ./packages/contracts/
 COPY packages/domain/package.json ./packages/domain/

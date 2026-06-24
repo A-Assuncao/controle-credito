@@ -11,8 +11,9 @@ import { withSentryConfig } from '@sentry/nextjs';
  * silent: !process.env.CI suprime logs do Sentry em build local
  * (em CI ele loga informacoes uteis sobre upload de source maps).
  *
- * Sem SENTRY_AUTH_TOKEN, o upload eh' silenciosamente pulado - o build
- * continua normalmente.
+ * sourcemaps.disable: pula upload quando nao ha authToken. Sem isso o
+ * SDK loga warning "No auth token provided" no build. Em prod sem
+ * Sentry configurado (nosso caso atual), eh' o path normal.
  *
  * output: 'standalone' gera .next/standalone/ com server.js +
  * node_modules production-only. Necessario pro Dockerfile do web
@@ -30,4 +31,10 @@ export default withSentryConfig(config, {
 
   // Suprime logs do Sentry em build local (CI loga normalmente).
   silent: !process.env.CI,
+
+  // Pula upload de source maps quando SENTRY_AUTH_TOKEN nao esta setado.
+  // Evita o warning "No auth token provided" no build do Vercel.
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
 });

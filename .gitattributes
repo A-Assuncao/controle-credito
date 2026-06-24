@@ -1,0 +1,12 @@
+# Garante line endings consistentes (LF) em todos os arquivos de texto.
+# Sem isso, devs em Windows editam arquivos e commita com CRLF,
+# fazendo o Prettier reportar "Delete \r" em 800+ lugares no CI.
+#
+# Convenção deste repo: LF em todos os arquivos exceto onde Windows
+# realmente exige CRLF (ex: batch files .bat/.cmd).
+* text=auto eol=lf
+
+# Force CRLF para arquivos que realmente precisam (batch Windows).
+*.bat    eol=crlf
+*.cmd    eol=crlf
+*.ps1    eol=crlf
