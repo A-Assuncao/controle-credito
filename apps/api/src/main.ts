@@ -34,8 +34,35 @@ async function bootstrap(): Promise<void> {
   });
 
   app.use(cookieParser());
+
+  // CORS: aceita lista hardcoded de origens alem de env.NEXTAUTH_URL.
+  //
+  // Por que hardcoded: as URLs do Vercel/Render deste SaaS sao conhecidas
+  // e imutaveis (single-tenant). Adicionar env var CORS_ORIGINS seria
+  // overkill - mais uma coisa pra documentar e esquecer.
+  //
+  // env.NEXTAUTH_URL continua sendo a URL do FRONTEND (Vercel) - usado
+  // em recovery.service.ts para construir link de reset. Aqui entra
+  // tambem na lista de origens via spread, garantindo que front
+  // e back concordam na URL canonica.
+  //
+  // Function-based origin: NestJS CORS permite decidir por request.
+  // Se origin nao veio (same-origin, server-to-server, curl) -> permite.
+  const allowedOrigins = [
+    env.NEXTAUTH_URL,
+    'https://controle-credito.onrender.com',  // API em prod (caso alguem chame direto)
+    'https://controle-credito.vercel.app',    // Vercel production alias
+    'http://localhost:3000',                  // dev local (apps/web)
+  ];
   app.enableCors({
-    origin: env.NEXTAUTH_URL,
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        logger.warn({ origin }, 'CORS: origin not allowed');
+        callback(new Error(`CORS: origin ${origin} not allowed`), false);
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-correlation-id'],
@@ -45,7 +72,12 @@ async function bootstrap(): Promise<void> {
   await app.listen(env.PORT_API);
 
   logger.info(
-    { port: env.PORT_API, env: env.NODE_ENV, corsOrigin: env.NEXTAUTH_URL },
+    {
+      port: env.PORT_API,
+      env: env.NODE_ENV,
+      corsOrigin: env.NEXTAUTH_URL,
+      allowedOrigins,
+    },
     'API listening',
   );
 }
