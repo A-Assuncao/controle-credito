@@ -70,7 +70,12 @@ RUN pnpm --filter @controle-credito/contracts build \
     && pnpm --filter @controle-credito/api build
 
 # Prune devDeps pra deixar node_modules enxuto.
-RUN pnpm --filter @controle-credito/api --prod deploy /app/api-prod
+#
+# NOTA: pnpm 11 introduziu ERR_PNPM_DEPLOY_NONINJECTED_WORKSPACE que
+# bloqueia `pnpm deploy` em workspaces sem inject-workspace-packages.
+# Usamos --legacy como workaround. Alternativa: adicionar
+# `force-legacy-deploy: true` em pnpm-workspace.yaml.
+RUN pnpm --filter @controle-credito/api --prod --legacy deploy /app/api-prod
 
 # ============================================================
 # Stage 2: runner
