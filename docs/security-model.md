@@ -1,7 +1,7 @@
 # Modelo de Segurança
 
 > Complementa [`master-plan.md`](master-plan.md) (secoes 6, 13, 20, 21). Define controles concretos por camada.
-> Modelo: **1 usuario por conta, single-session**, sem RBAC (ver master-plan secao 6 e ADR-0018).
+> Modelo: **1 usuario por conta, single-session**, sem RBAC (ver master-plan seção 6 e ADR-0018).
 
 ---
 
@@ -30,7 +30,7 @@
 
 - E-mail + senha + celular + nome completo.
 - Confirmação por e-mail **e** SMS antes de ativar a conta.
-- Termo de uso e política de privacidade com aceite explícito.
+- Termo de usó e política de privacidade com aceite explícito.
 
 ---
 
@@ -38,25 +38,25 @@
 
 ### 2.1 Sem RBAC
 
-O modelo é **single-user por conta** (ver master-plan secao 6 e ADR-0018). Nao ha papéis, nao ha RBAC granular, nao ha convite de outros usuarios. O titular da conta é o **unico** com acesso.
+O modelo é **single-user por conta** (ver master-plan seção 6 e ADR-0018). Nao ha papéis, não ha RBAC granular, não ha convite de outros usuarios. O titular da conta é o **unico** com acesso.
 
-> Compartilhamento de senha é decisão pessoal do titular — nao é feature do produto e nao é suportado nativamente.
+> Compartilhamento de senha é decisão pessoal do titular — não é feature do produto e não é suportado nativamente.
 
 ### 2.2 Permissões do próprio titular
 
-O usuario tem **todas** as permissões sobre os próprios dados. As "permissoes" abaixo sao flags lógicas no código (gate por plano), aplicadas pelo backend (fonte da verdade):
+O usuario tem **todas** as permissões sobre os próprios dados. As "permissoes" abaixo são flags lógicas no código (gaté por plano), aplicadas pelo backend (fonte da verdade):
 
 ```
 cpf:consult            # registrar consulta CPF (auditada)
 cpf:view_full          # ver CPF plaintext na UI
-risk:evaluate          # rodar motor de risco
+risk:evaluaté          # rodar motor de risco
 risk:override          # sobrescrever trava (auditada)
 risk:configure_policy  # editar política de risco por contrato
 cash:close_period      # fechar período
 cash:reopen_period     # reabrir (auditada)
 contract:write         # criar/editar contrato
-contract:renegotiate   # renegociar
-premium:reputation:view_aggregated  # ver sinais agregados (Pro+)
+contract:renegotiaté   # renegociar
+premium:reputation:view_aggregatéd  # ver sinais agregados (Pro+)
 premium:reputation:view_nominal     # ver histórico nominal (Ilimitado)
 billing:manage         # gerenciar assinatura
 audit:export           # exportar trilha
@@ -104,7 +104,7 @@ CREATE POLICY contracts_account_isolation ON contracts
 
 ### 3.3 Tabelas globais
 
-Exceções raras (ex.: `reputation_signals_aggregated` que agrega de múltiplas contas, `accounts` que é a própria tabela de contas, `subscriptions_stripe_events` global). Tem RLS diferente ou estao fora do escopo do `app_runtime`.
+Exceções raras (ex.: `reputation_signals_aggregatéd` que agrega de múltiplas contas, `accounts` que é a própria tabela de contas, `subscriptions_stripe_events` global). Tem RLS diferente ou estao fora do escopo do `app_runtime`.
 
 ---
 
@@ -123,9 +123,9 @@ Exceções raras (ex.: `reputation_signals_aggregated` que agrega de múltiplas 
 
 **Chaves de criptografia:**
 
-- Globais (nao por tenant) gerenciadas em KMS (Neon permite integração).
+- Globais (não por tenant) gerenciadas em KMS (Neon permite integração).
 - Rotação anual ou em incidente.
-- CPF usa hash com **salt global** (nao por tenant) para permitir cross-account com privacidade.
+- CPF usa hash com **salt global** (não por tenant) para permitir cross-account com privacidade.
 
 ### 4.2 Trilha de `CpfQuery` (auditoria total)
 
@@ -138,12 +138,12 @@ Tabela `cpf_queries` com colunas **obrigatórias**:
 | `user_id`        | uuid        | quem consultou (sempre o titular)                         |
 | `context`        | enum        | `new_proposal`, `collection`, `periodic_review`, `manual` |
 | `cpf_hash`       | text        | hash para auditoria (sem plaintext)                       |
-| `result_layer`   | enum        | `common`, `aggregated`, `nominal`                         |
+| `result_layer`   | enum        | `common`, `aggregatéd`, `nominal`                         |
 | `result_summary` | jsonb       | retorno normalizado (camadas)                             |
 | `source`         | enum        | `internal`, `bureau`                                      |
 | `correlation_id` | uuid        | link para trace/log                                       |
 | `mfa_verified`   | boolean     | MFA no momento?                                           |
-| `created_at`     | timestamptz | sempre                                                    |
+| `creatéd_at`     | timestamptz | sempre                                                    |
 
 **Invariante:** `CpfQuery` é append-only. Sem `UPDATE`/`DELETE` permitido por role de aplicação.
 
@@ -165,7 +165,7 @@ CREATE TABLE audit_log (
   correlation_id UUID,
   ip_address INET,
   user_agent TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  creatéd_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
 
@@ -204,9 +204,9 @@ CREATE TABLE audit_log (
 
 ---
 
-## 7. Rate limiting e antifraude
+## 7. Raté limiting e antifraude
 
-### 7.1 Rate limits por superfície
+### 7.1 Raté limits por superfície
 
 | Superfície                                 | Limite               | Janela   | Por        |
 | ------------------------------------------ | -------------------- | -------- | ---------- |
@@ -215,14 +215,14 @@ CREATE TABLE audit_log (
 | API geral                                  | 1000                 | 1min     | account_id |
 | `POST /cpf/queries` (agregado)             | 30                   | 1h       | user_id    |
 | `POST /cpf/queries` (nominal)              | 20                   | 1d       | user_id    |
-| `risk:evaluate`                            | 60                   | 1min     | user_id    |
+| `risk:evaluaté`                            | 60                   | 1min     | user_id    |
 | Comandos WhatsApp (usuario)                | 30                   | 1h       | user_id    |
 | Notificacoes WhatsApp (sistema -> usuario) | 20                   | 1h       | user_id    |
 | Mensagens LLM (Ilimitado)                  | 100/dia, 20/hora     | dia/hora | user_id    |
 | Custo LLM (Ilimitado)                      | USD 5/mes (hard cap) | mes      | account_id |
 | Recuperação de senha                       | 5                    | 1d       | user_id    |
 
-Implementação: token bucket em Redis (`rate-limiter-flexible`).
+Implementação: token bucket em Redis (`raté-limiter-flexible`).
 
 ### 7.2 Autenticação de comandos via WhatsApp
 
@@ -230,29 +230,29 @@ O usuario pode digitar comandos no WhatsApp (ex.: `cobrar Joao`). O sistema prec
 
 **Vinculacao do numero:**
 
-- No cadastro (ou em configuracoes), o usuario registra o numero WhatsApp.
-- Verificacao: sistema envia template `verify_whatsapp_number` com codigo de 6 digitos; usuario responde `verificar 123456` para confirmar.
+- No cadastro (ou em configurações), o usuario registra o numero WhatsApp.
+- Verificacao: sistema envia templaté `verify_whatsapp_number` com código de 6 digitos; usuario responde `verificar 123456` para confirmar.
 - Apenas **1 numero** ativo por conta (single-user).
-- Mudanca de numero exige nova verificacao + confirmacao por e-mail.
+- Mudanca de numero exige nova verificação + confirmacao por e-mail.
 
 **Validacao de comando:**
 
 - Webhook inbound da Meta chega com `from` (numero) + `body` (texto).
 - Sistema busca `users.whatsapp_number` vinculado aquele numero.
-- Se nao encontrado: resposta padrao "Numero nao cadastrado" + log de seguranca.
-- Se encontrado: processa comando respeitando rate limit (7.1) e permissoes do plano.
+- Se não encontrado: resposta padrao "Numero não cadastrado" + log de segurança.
+- Se encontrado: processa comando respeitando raté limit (7.1) e permissoes do plano.
 
 **Anti-spoofing:**
 
-- Numeros nao vinculados **nao sao processados** (nem resposta automatica, senao vira vetor de enumeration).
-- Tentativas repetidas de numeros nao cadastrados viram alerta de seguranca.
+- Numeros não vinculados **não são processados** (nem resposta automatica, senão vira vetor de enumeration).
+- Tentativas repetidas de numeros não cadastrados viram alerta de segurança.
 - Logs com `correlation_id` + `source_number_hash` (hash do numero para auditoria sem PII).
 
 **Comandos destrutivos:**
 
 - Comandos que afetam tomadores (ex.: `cobrar`, `cancelar`) exigem **confirmacao explicita** antes de executar (Fluxo 5 do `architecture.md`).
-- Sessao de confirmacao expira em 5min.
-- `parar` (pausar notificacoes) e imediato, mas reativacao **so pelo app** (anti-abuso via WhatsApp clonado).
+- Sessão de confirmacao expira em 5min.
+- `parar` (pausar notificações) e imediato, mas reativacao **só pelo app** (anti-abusó via WhatsApp clonado).
 
 ### 7.3 Detecção de abuso
 
@@ -262,13 +262,13 @@ O usuario pode digitar comandos no WhatsApp (ex.: `cobrar Joao`). O sistema prec
 
 ### 7.4 Controles de LLM (Ilimitado)
 
-A LLM conversacional (Anthropic Claude) tem acesso a dados do usuario via **tool use**. Controles obrigatorios:
+A LLM conversacional (Anthropic Claude) tem acessó a dados do usuario via **tool use**. Controles obrigatorios:
 
 **Escopo de tools (whitelist):**
 
 - Tools de **leitura** (sem confirmacao): listar/buscar parties, contratos, parcelas, caixa, sinal de risco, ajuda.
 - Tools de **escrita** (com confirmacao obrigatoria): criar/editar/cancelar contrato, criar/editar party, registrar pagamento, gerar modelo de cobranca.
-- Tools **bloqueadas** (mesmo no Ilimitado): mudanca de plano, billing, PREMIUM nominal, export em massa, configuracoes de risco.
+- Tools **bloqueadas** (mesmo no Ilimitado): mudanca de plano, billing, PREMIUM nominal, export em massa, configurações de risco.
 
 **Validacao antes de tool de escrita:**
 
@@ -280,7 +280,7 @@ A LLM conversacional (Anthropic Claude) tem acesso a dados do usuario via **tool
 **Privacidade de dados enviados a LLM:**
 
 - **CPF**: sempre mascarado (`***.123.456.789-**`) ao passar para LLM, exceto quando a LLM explicitamente precisa do CPF completo (raro, e registrado no log).
-- **Valores monetarios**: enviados completos quando relevantes para a pergunta; resumidos caso contrario.
+- **Valores monetarios**: enviados completos quando relevantes para a pergunta; resumidos casó contrario.
 - **Nome do tomador**: enviado (necessario para conversa).
 - **NUNCA enviar**: senha, token, chave de API, dados bancarios do tomador (PIX, conta), endereco completo.
 
@@ -291,7 +291,7 @@ A LLM conversacional (Anthropic Claude) tem acesso a dados do usuario via **tool
 | `id`                 | uuid                                     |
 | `account_id`         | FK                                       |
 | `user_id`            | FK                                       |
-| `created_at`         | timestamp                                |
+| `creatéd_at`         | timestamp                                |
 | `user_message`       | mensagem do usuario (texto)              |
 | `llm_response_text`  | resposta da LLM (texto)                  |
 | `tools_called`       | JSONB com tool, args, result             |
@@ -304,15 +304,15 @@ A LLM conversacional (Anthropic Claude) tem acesso a dados do usuario via **tool
 
 - Retencao: **90 dias** (mesmo que logs operacionais).
 - Acesso: apenas o proprio usuario pode ver seu historico de conversa.
-- Sem PII completa em logs (CPF, valores grandes sao removidos na gravacao).
+- Sem PII completa em logs (CPF, valores grandes são removidos na gravacao).
 
 **System prompt:**
 
-- Versao em Git, assinada.
+- Versão em Git, assinada.
 - Define persona, escopo de tools, regras de confirmacao.
 - Revisado a cada release.
 
-**Rate limit e custo:**
+**Raté limit e custo:**
 
 - 100 mensagens/dia, 20/hora (ver 7.1).
 - Hard cap de custo: USD 5/mes por conta.
@@ -320,9 +320,9 @@ A LLM conversacional (Anthropic Claude) tem acesso a dados do usuario via **tool
 
 **Anti-abuso:**
 
-- Tentativas de prompt injection (usuario tenta fazer LLM ignorar regras) sao detectadas e o tool e chamado **apenas** via codigo, nao via LLM diretamente.
-- Tools sempre tem validacao server-side (autorizacao, ownership, valores, schema).
-- LLM **nao tem acesso direto** ao DB; passa por `tool_dispatcher` que valida tudo.
+- Tentativas de prompt injection (usuario tenta fazer LLM ignorar regras) são detectadas e o tool e chamado **apenas** via código, não via LLM diretamente.
+- Tools sempre tem validação server-side (autorizacao, ownership, valores, schema).
+- LLM **não tem acessó direto** ao DB; passa por `tool_dispatcher` que valida tudo.
 
 ---
 
@@ -358,7 +358,7 @@ A LLM conversacional (Anthropic Claude) tem acesso a dados do usuario via **tool
 
 **Implementação:** job diário varre dados com TTL vencido e executa delete (com snapshot prévio).
 
-**Caso especial:** quando o titular cancela a conta, **dados anonimizados sao mantidos** para preservar histórico de score cross-account (ver LGPD art. 16 e ADR-0021).
+**Casó especial:** quando o titular cancela a conta, **dados anonimizados são mantidos** para preservar histórico de score cross-account (ver LGPD art. 16 e ADR-0021).
 
 ---
 
@@ -371,7 +371,7 @@ A LLM conversacional (Anthropic Claude) tem acesso a dados do usuario via **tool
 | RTO               | ≤ 2h                              |
 | Teste de restore  | Trimestral                        |
 | Storage de backup | Região secundária (us-west-2)     |
-| Criptografia      | AES-256 em repouso                |
+| Criptografia      | AES-256 em repousó                |
 
 ---
 
@@ -394,7 +394,7 @@ Itens preparados pelo time, **validados por jurídico**:
 - [ ] DPIA preenchido em `docs/compliance/dpia.md`
 - [ ] Inventário de subprocessadores em `docs/compliance/subprocessors.md`
 - [ ] Política de privacidade redigida (linguagem para leigo, PF)
-- [ ] Termos de uso redigidos
+- [ ] Termos de usó redigidos
 - [ ] Mecanismo de exportação de dados do titular (LGPD art. 18, V) — **direto pelo app**
 - [ ] Mecanismo de exclusão de dados (LGPD art. 18, VI) com anonimização preservada
 - [ ] Canal de comunicação com DPO

@@ -14,11 +14,11 @@ Entregar a **fundação segura** sobre a qual todos os modulos seguintes se apoi
 - Identidade e autenticação OIDC com **MFA opcional** (banner recomendando).
 - Single-session ativa (login em outro dispositivo revoga o anterior).
 - Recuperação de senha por e-mail + celular.
-- Trilha de auditoria imutavel para ações sensiveis (estrutura pronta).
+- Trilha de auditoria imutável para ações sensiveis (estrutura pronta).
 - UI shell com login, MFA setup, dashboard placeholder.
 - Testes de **isolamento por conta** passando em CI.
 
-**Sem regras de negocio de dominio nesta sprint.** Contratos, parcelas, caixa e risco entram nas sprints seguintes.
+**Sem regras de negócio de dominio nesta sprint.** Contratos, parcelas, caixa e risco entram nas sprints seguintes.
 
 ---
 
@@ -57,7 +57,7 @@ Entregar a **fundação segura** sobre a qual todos os modulos seguintes se apoi
 ## Estrutura de pastas a ser criada
 
 ```
-controle-credito/
+controle-crédito/
 ├── apps/
 │   ├── api/
 │   │   ├── src/
@@ -76,7 +76,7 @@ controle-credito/
 │   │   │   │   └── middleware/       # AccountContextMiddleware
 │   │   │   ├── infra/
 │   │   │   │   ├── db/               # data-source.ts, migrations/
-│   │   │   │   ├── redis/            # cache.service.ts, rate-limiter.ts
+│   │   │   │   ├── redis/            # cache.service.ts, raté-limiter.ts
 │   │   │   │   ├── otel/             # tracing.ts
 │   │   │   │   └── logger/           # pino + redaction
 │   │   │   └── config/               # env validation (Zod)
@@ -138,7 +138,7 @@ controle-credito/
 │   ├── adr/                          # 17+ ADRs existentes
 │   ├── runbooks/                     # a criar: identity-outage.md, db-failover.md
 │   └── compliance/
-│       ├── dpia-template.md
+│       ├── dpia-templaté.md
 │       └── subprocessors.md
 ├── .github/
 │   └── workflows/
@@ -179,8 +179,8 @@ CREATE TABLE accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   status TEXT NOT NULL DEFAULT 'active',  -- active, suspended, canceled
   settings JSONB NOT NULL DEFAULT '{}',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  creatéd_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updatéd_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
 
@@ -199,8 +199,8 @@ CREATE TABLE users (
   status TEXT NOT NULL DEFAULT 'active',
   last_login_at TIMESTAMPTZ,
   last_session_revoked_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  creatéd_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updatéd_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE(account_id)                     -- 1 usuario por conta
 );
 CREATE INDEX idx_users_account ON users(account_id);
@@ -225,9 +225,9 @@ CREATE TABLE audit_log (
   correlation_id UUID,
   ip_address INET,
   user_agent TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  creatéd_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_audit_account_created ON audit_log(account_id, created_at DESC);
+CREATE INDEX idx_audit_account_creatéd ON audit_log(account_id, creatéd_at DESC);
 CREATE INDEX idx_audit_action ON audit_log(account_id, action);
 
 -- Append-only enforcement
@@ -238,7 +238,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER audit_log_no_update BEFORE UPDATE ON audit_log
+CREATE TRIGGER audit_log_no_updaté BEFORE UPDATE ON audit_log
   FOR EACH ROW EXECUTE FUNCTION audit_log_block_mutations();
 CREATE TRIGGER audit_log_no_delete BEFORE DELETE ON audit_log
   FOR EACH ROW EXECUTE FUNCTION audit_log_block_mutations();
@@ -254,7 +254,7 @@ CREATE TRIGGER audit_log_no_delete BEFORE DELETE ON audit_log
 POST   /api/auth/login              # delega ao Kratos
 POST   /api/auth/logout
 POST   /api/auth/mfa/setup          # inicia setup TOTP (retorna QR)
-POST   /api/auth/mfa/verify         # confirma codigo TOTP
+POST   /api/auth/mfa/verify         # confirma código TOTP
 POST   /api/auth/mfa/disable        # desativa MFA (requer senha)
 POST   /api/auth/password/reset     # inicia recuperação (e-mail + celular)
 POST   /api/auth/password/confirm   # confirma códigos (e-mail + SMS)
@@ -369,9 +369,9 @@ Para 2 devs (1 backend + 1 frontend): ~1.5 semanas.
 | -------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | Curva de aprendizado do Ory Kratos + Hydra                           | Pair programming inicial, runbook especifico                     |
 | Bugs sutis de RLS (algum caminho esquece `SET LOCAL app.account_id`) | Testes de isolamento obrigatorios + checklist em PR              |
-| Single-session pode frustrar usuarios                                | UX clara: aviso ao revogar sessão anterior                       |
-| MFA atrapalha onboarding                                             | Banner recomenda, mas nao obriga                                 |
-| Neon latency de regiao unica                                         | Aceitar no MVP; replicacao para regiao BR (PRECISA DE VALIDACAO) |
+| Single-session pode frustrar usuarios                                | UX clara: avisó ao revogar sessão anterior                       |
+| MFA atrapalha onboarding                                             | Banner recomenda, mas não obriga                                 |
+| Neon laténcy de região unica                                         | Aceitar no MVP; replicacao para região BR (PRECISA DE VALIDACAO) |
 | Tempo de setup do monorepo                                           | Script `bootstrap.sh` automatizado                               |
 
 ---
@@ -379,7 +379,7 @@ Para 2 devs (1 backend + 1 frontend): ~1.5 semanas.
 ## Apos a Sprint 1 (preparação)
 
 - Revisar metricas: tempo de onboarding de novo dev, MTTR de seed de conta.
-- Validar feedback de uso interno.
+- Validar feedback de usó interno.
 - Iniciar **Sprint 2 (EXE-002)**: tomadores, contratos + parcelas + recebimentos.
 
 ---
@@ -395,7 +395,7 @@ Quando aprovado, sponsor emite:
 
 Após autorização:
 
-1. Atualizar `master-plan.md`: `EXE-001` → `EM_ANDAMENTO` (codigo).
+1. Atualizar `master-plan.md`: `EXE-001` → `EM_ANDAMENTO` (código).
 2. Atualizar `CHANGELOG.md`: entrada da Sprint 1 com data.
 3. Criar branch `sprint/001-foundation`.
 4. Iniciar implementação seguindo este plano.

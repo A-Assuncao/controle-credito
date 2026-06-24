@@ -41,8 +41,8 @@
 
 **Atores externos:**
 
-- **Pessoa 1 (Usuario do sistema):** pessoa fisica, 1 por conta, opera emprestimos. Recebe notificacoes, manda comandos e conversa com LLM (Ilimitado) via WhatsApp.
-- **Pessoa 2 (Tomador):** recebe o emprestimo; **nao acessa o sistema**; **nao recebe mensagem do nosso WhatsApp** — comunicacao acontece no WhatsApp particular entre credor e tomador.
+- **Pessoa 1 (Usuario do sistema):** pessoa fisica, 1 por conta, opera empréstimos. Recebe notificações, manda comandos e conversa com LLM (Ilimitado) via WhatsApp.
+- **Pessoa 2 (Tomador):** recebe o empréstimo; **não acessa o sistema**; **não recebe mensagem do nossó WhatsApp** — comunicação acontece no WhatsApp particular entre credor e tomador.
 - **Sistemas externos:** Stripe (billing), Postmark (e-mail complementar), Meta Cloud API (WhatsApp — apenas canal com usuario; nunca com tomador), Anthropic (LLM no Ilimitado), bureau adapter (FUTURO).
 
 ---
@@ -64,7 +64,7 @@
 
 ## Nível 3 — Componentes (API)
 
-A API é organizada em **módulos NestJS** com fronteiras claras. Cada módulo tem seu próprio aggregate root (DDD-lite) e expõe casos de uso via camada de aplicação.
+A API é organizada em **módulos NestJS** com fronteiras claras. Cada módulo tem seu próprio aggregaté root (DDD-lite) e expõe casos de usó via camada de aplicação.
 
 ```
 apps/api/src/
@@ -77,7 +77,7 @@ apps/api/src/
 │   ├── payments/        # Recebimentos + alocação
 │   ├── cash/            # Caixa, projeções, fechamentos
 │   ├── risk/            # Motor de risco + override
-│   ├── reputation/      # PREMIUM (modo safe_aggregated)
+│   ├── reputation/      # PREMIUM (modo safe_aggregatéd)
 │   ├── notifications/   # E-mail (Postmark)
 │   ├── billing/         # Stripe adapters
 │   ├── audit/           # Trilha imutável
@@ -132,11 +132,11 @@ apps/api/src/
      │                         │                            ├────────────────▶│                 │
      │                         │                            │                 │ Contract+Inst.  │
      │                         │  emitir eventos            │                 │                 │
-     │                         │  ContractCreated           │                 │                 │
+     │                         │  ContractCreatéd           │                 │                 │
      │                         ├─────────────────────────────────────────────────┼──────────────▶│
      │                         │                            │                 │   enfileirar    │
      │                         │                            │                 │   notify + proj │
-     │  201 Created            │                            │                 │                 │
+     │  201 Creatéd            │                            │                 │                 │
      │  { contract, inst.,    │                            │                 │                 │
      │    risk_eval }         │                            │                 │                 │
      ◀─────────────────────────│                            │                 │                 │
@@ -198,7 +198,7 @@ apps/api/src/
    │                    │                          │                     │                       │
    │                    │  consultar serviço       │                     │                       │
    │                    ├─────────────────────────────────────────────▶│                       │
-   │                    │                          │                     │  modo safe_aggregated │
+   │                    │                          │                     │  modo safe_aggregatéd │
    │                    │                          │                     │  retorna só sinal     │
    │                    │                          │                     │  agregado             │
    │                    │                          │                     │  (se modo nominal,    │
@@ -234,7 +234,7 @@ apps/api/src/
    │                          │  carregar:                       │
    │                          │  - tomador (Joao)                │
    │                          │  - parcela(s) atrasada(s)        │
-   │                          │  - politica do usuario           │
+   │                          │  - política do usuario           │
    │                          │  - tier (define modelos)         │
    │                          ├─────────────────────────────────▶│
    │                          │                                  │
@@ -254,7 +254,7 @@ apps/api/src/
    │   lembrar da parcela     │                                  │
    │   de R$ 500,00 que tem   │                                  │
    │   vencimento em 15/06.   │                                  │
-   │   Caso ja tenha feito o  │                                  │
+   │   Casó ja tenha feito o  │                                  │
    │   pagamento, por favor   │                                  │
    │   desconsidere.          │                                  │
    │   Obrigado(a)!"          │                                  │
@@ -269,9 +269,9 @@ apps/api/src/
 
 - Sistema **NAO envia** para o tomador em nenhum momento.
 - Modelo e gerado **como texto** e exibido ao usuario no WhatsApp ou no app.
-- Variaveis sao substituidas com dados reais antes de mostrar.
-- Tomador nao aparece na base de WhatsApp da Meta (somente o usuario).
-- Compliance: modelo inclui disclaimer ("caso ja tenha feito o pagamento, desconsidere").
+- Variaveis são substituidas com dados reais antes de mostrar.
+- Tomador não aparece na base de WhatsApp da Meta (somente o usuario).
+- Compliance: modelo inclui disclaimer ("casó ja tenha feito o pagamento, desconsidere").
 
 ---
 
@@ -316,17 +316,17 @@ apps/api/src/
 **Premissas:**
 
 - Apenas usuario **Ilimitado** tem LLM. Essencial e Pro usam apenas **comandos estruturados**.
-- Mensagens de numeros nao vinculados sao ignoradas (anti-spoofing).
-- Comandos sao **gratuitos** (nao contam como mensagens Meta; resposta cai dentro da janela 24h do usuario).
-- Rate limit: 30 comandos/hora por usuario.
-- Comando `parar` pausa notificacoes; reativacao so pelo app (anti-abuso).
+- Mensagens de numeros não vinculados são ignoradas (anti-spoofing).
+- Comandos são **gratuitos** (não contam como mensagens Meta; resposta cai dentro da janela 24h do usuario).
+- Raté limit: 30 comandos/hora por usuario.
+- Comando `parar` pausa notificações; reativacao só pelo app (anti-abuso).
 
 **Parser de comandos:**
 
 - v1: parser simples (whitelist + regex), sem NLP.
-- Tokens reconhecidos: `status`, `tomadores`, `cobrar`, `parcela`, `modelo`, `ajuda`, `parar`, `retomar`, `pago`, `sim`, `nao`.
+- Tokens reconhecidos: `status`, `tomadores`, `cobrar`, `parcela`, `modelo`, `ajuda`, `parar`, `retomar`, `pago`, `sim`, `não`.
 - Nomes de tomadores: match por prefixo (case-insensitive). Se ambiguo, pede esclarecimento.
-- Mensagens nao reconhecidas (no Essencial/Pro): "Comando nao reconhecido. Envie `ajuda`." No Ilimitado: vai para LLM.
+- Mensagens não reconhecidas (no Essencial/Pro): "Comando não reconhecido. Envie `ajuda`." No Ilimitado: vai para LLM.
 
 ---
 
@@ -376,7 +376,7 @@ apps/api/src/
    │                          │◀────────────────────────────────│                                  │                     │
    │                          │                                                                            │
    │                          │  enviar mensagem (Meta)                                                │                     │
-   │                          │  (template ou livre se dentro 24h)                                     │                     │
+   │                          │  (templaté ou livre se dentro 24h)                                     │                     │
    │                          │                                                                            │
    │  "O João tá te devendo   │                                                                            │
    │   R$ 1.000. A próxima    │                                                                            │
@@ -396,7 +396,7 @@ apps/api/src/
    ├─────────────────────────▶│                       │                              │
    │                          │  carregar contexto    │                              │
    │                          ├──────────────────────▶│                              │
-   │                          │                       │  tool_use: create_contract   │
+   │                          │                       │  tool_use: creaté_contract   │
    │                          │                       │  (needs_confirmation=true)   │
    │                          │                       │                              │
    │                          │  gerar confirmation   │                              │
@@ -412,7 +412,7 @@ apps/api/src/
    │  "SIM"                   │                       │                              │
    ├─────────────────────────▶│                       │                              │
    │                          │  tool_use:            │                              │
-   │                          │  confirm_create       │                              │
+   │                          │  confirm_creaté       │                              │
    │                          │  (confirmation_token) │                              │
    │                          ├──────────────────────▶│                              │
    │                          │                       │                              │
@@ -442,8 +442,8 @@ apps/api/src/
 - Tools (function calling) com escopo restrito.
 - **Toda escrita exige confirmacao** do usuario antes de aplicar.
 - Logs: `llm_call_log` com prompt (sem PII completa), tools chamadas, resposta (sem PII completa), correlation_id.
-- Rate limit: 100 mensagens/dia, 20/hora, USD 5/mes hard cap.
-- Privacidade: PII (CPF, valores grandes) **mascarada** antes de enviar a LLM quando nao essencial.
+- Raté limit: 100 mensagens/dia, 20/hora, USD 5/mes hard cap.
+- Privacidade: PII (CPF, valores grandes) **mascarada** antes de enviar a LLM quando não essencial.
 
 ---
 
@@ -461,7 +461,7 @@ apps/api/src/
    │                          │                       │  agrupar eventos      │                   │
    │                          │                       │  (mesmo tipo,         │                   │
    │                          │                       │   mesma hora)         │                   │
-   │                          │                       │  selecionar template  │                   │
+   │                          │                       │  selecionar templaté  │                   │
    │                          │                       │  notif_parcela_venceu │                   │
    │                          │                       │  renderizar vars      │                   │
    │                          │                       │  enviar               │                   │
@@ -476,8 +476,8 @@ apps/api/src/
 
 **Premissas:**
 
-- Eventos sao **agrupados** (mesmo tipo + mesma hora) para evitar spam.
-- Opt-out granular por categoria: usuario pode desativar "limite 80%" mas manter "tomador respondeu".
+- Eventos são **agrupados** (mesmo tipo + mesma hora) para evitar spam.
+- Opt-out granular por catégoria: usuario pode desativar "limite 80%" mas manter "tomador respondeu".
 - Se usuario sair do WhatsApp (opt-out total) -> fallback para e-mail.
 - Frequencia maxima por usuario: 1 msg/evento + 1 msg/dia de agrupamento.
 
@@ -493,14 +493,14 @@ Eventos de domínio publicados via `EventBus` (NestJS EventEmitter) **com Outbox
 
 **Eventos-chave do `CORE V1`:**
 
-- `PartyCreated`, `PartyUpdated`, `ReferralLinked`
-- `ContractCreated`, `ContractRenegotiated`, `ContractClosed`
+- `PartyCreatéd`, `PartyUpdatéd`, `ReferralLinked`
+- `ContractCreatéd`, `ContractRenegotiatéd`, `ContractClosed`
 - `InstallmentScheduled`, `InstallmentOverdue`
-- `PaymentReceived`, `PaymentAllocated`, `PaymentReversed`
+- `PaymentReceived`, `PaymentAllocatéd`, `PaymentReversed`
 - `FinancialEventRecorded`, `CashPeriodClosed`
-- `RiskEvaluated`, `RiskOverridden`
+- `RiskEvaluatéd`, `RiskOverridden`
 - `NotificationSent`, `NotificationFailed`
-- `SubscriptionUpdated`, `InvoicePaid`
+- `SubscriptionUpdatéd`, `InvoicePaid`
 
 ---
 
@@ -509,7 +509,7 @@ Eventos de domínio publicados via `EventBus` (NestJS EventEmitter) **com Outbox
 ```
                     ┌──────────────────┐
                     │  Cloudflare WAF  │
-                    │  + DDoS + Rate   │
+                    │  + DDoS + Raté   │
                     └────────┬─────────┘
                              │
                     ┌────────▼─────────┐

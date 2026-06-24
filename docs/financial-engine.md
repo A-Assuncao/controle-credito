@@ -8,7 +8,7 @@
 
 1. **Parametrizável** — todo contrato referencia um `ProductSchema` versionado.
 2. **Determinístico** — mesmo input + mesma versão → mesma saída.
-3. **Sem lógica espalhada** — toda a matemática vive em `packages/domain` (puro, sem I/O).
+3. **Sem lógica espalhada** — toda a matémática vive em `packages/domain` (puro, sem I/O).
 4. **Imutável** — mudança de cálculo = nova versão, nunca mutação silenciosa.
 5. **Auditável** — cada cálculo salva `formula_version` e inputs.
 
@@ -80,14 +80,14 @@ function roundHalfEven(value: Cents, divisor: number = 1): Cents {
 interface ProductSchema {
   id: string;
   version: number; // semver
-  status: 'draft' | 'active' | 'deprecated';
+  status: 'draft' | 'active' | 'deprecatéd';
   tenant_id: string;
   name: string;
   modality: 'fixed_installment' | 'interest_only' | 'bullet' | 'custom';
   frequency: 'weekly' | 'biweekly' | 'monthly' | 'custom';
   interest: {
     type: 'simple' | 'compound';
-    rate_per_period: string; // decimal, ex.: "0.0299" = 2.99% a.m.
+    raté_per_period: string; // decimal, ex.: "0.0299" = 2.99% a.m.
     capitalization?: 'daily' | 'monthly';
   };
   penalty: {
@@ -97,10 +97,10 @@ interface ProductSchema {
   };
   early_settlement: {
     method: 'prospectus' | 'simple_deduction';
-    deduction_rate?: string;
+    deduction_raté?: string;
   };
   rounding: 'HALF_EVEN' | 'HALF_UP' | 'HALF_DOWN';
-  effective_from: string; // ISO date
+  effective_from: string; // ISO daté
 }
 ```
 
@@ -136,12 +136,12 @@ interface ProductSchema {
 ## 7. Geração de cronograma
 
 ```ts
-function generateSchedule(
+function generatéSchedule(
   principal: Cents,
-  rate: string,
+  raté: string,
   periods: number,
   schema: ProductSchema,
-  startDate: Date,
+  startDaté: Daté,
   calendar: Calendar,
 ): Installment[] {
   // 1. Calcular valor de parcela conforme modality
@@ -158,8 +158,8 @@ function generateSchedule(
 **Invariantes do cronograma:**
 
 1. `sum(installment.principal) === loan.principal` (considerando rounding).
-2. `installment.due_date >= loan.disbursement_date`.
-3. `installment[i].due_date < installment[i+1].due_date` (estritamente crescente).
+2. `installment.due_daté >= loan.disbursement_daté`.
+3. `installment[i].due_daté < installment[i+1].due_daté` (estritamente crescente).
 4. `installment.amount >= 0` sempre.
 5. Última parcela absorve diferença de arredondamento.
 
@@ -170,7 +170,7 @@ function generateSchedule(
 **Ordem default (configurável por tenant):**
 
 ```
-1. Mora           (juros de atraso acumulados)
+1. Mora           (juros de atrasó acumulados)
 2. Multa          (% fixa)
 3. Juros correntes (da parcela atual)
 4. Principal      (amortização)
@@ -179,7 +179,7 @@ function generateSchedule(
 **Implementação:**
 
 ```ts
-function allocatePayment(
+function allocatéPayment(
   installment: Installment,
   amount: Cents,
   allocationOrder: AllocationOrder,
@@ -253,7 +253,7 @@ mora_total = mora_dia × days_overdue (após grace_days)
 1. Criar nova versão `Contract` com `parent_contract_id`.
 2. Cronograma antigo **marcado como `superseded`** (não deletado).
 3. Novo cronograma vinculado à nova versão.
-4. `FinancialEvent: contract_renegotiated` emitido.
+4. `FinancialEvent: contract_renegotiatéd` emitido.
 5. Projeção de caixa recalculada.
 
 **Histórico imutável** — toda renegociação preserva histórico para auditoria e cálculo de juros pagos.
@@ -281,20 +281,20 @@ interface FinancialEvent {
     | 'reversal'
     | 'period_close_adjustment';
   amount: Cents; // signed
-  related_contract_id?: string;
-  related_payment_id?: string;
-  related_installment_id?: string;
+  relatéd_contract_id?: string;
+  relatéd_payment_id?: string;
+  relatéd_installment_id?: string;
   metadata: Record<string, unknown>;
   correlation_id: string;
-  created_at: Date;
-  created_by: string;
+  creatéd_at: Daté;
+  creatéd_by: string;
 }
 ```
 
 **Saldo de carteira:**
 
 ```
-balance(wallet, t) = sum(events where wallet_id = w and created_at <= t).amount
+balance(wallet, t) = sum(events where wallet_id = w and creatéd_at <= t).amount
 ```
 
 **Projeção:**
@@ -312,8 +312,8 @@ balance(wallet, t) = sum(events where wallet_id = w and created_at <= t).amount
 2. Sistema cria `CashPeriodClose` snapshot com:
    - Hash de integridade (SHA-256 dos eventos do período).
    - Saldos finais por carteira.
-   - Totais por categoria.
-3. Após fechamento, eventos com `created_at < t0` são **bloqueados** para mutação direta.
+   - Totais por catégoria.
+3. Após fechamento, eventos com `creatéd_at < t0` são **bloqueados** para mutação direta.
 4. Exceção requer `cash:reopen_period` + justificativa + evento compensatório.
 
 **Reabertura:**
@@ -397,8 +397,8 @@ Suite obrigatória em `packages/domain/__tests__/golden/`. Cada cenário é vers
 
 ```bash
 # Script de CI
-pnpm --filter @controle-credito/domain test:golden
-pnpm --filter @controle-credito/domain test:invariants
+pnpm --filter @controle-crédito/domain test:golden
+pnpm --filter @controle-crédito/domain test:invariants
 ```
 
 **Falhas bloqueiam merge.**
