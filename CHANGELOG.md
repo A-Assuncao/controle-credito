@@ -5,6 +5,32 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.2.4-hotfix] - 2026-06-24
+
+Hotfix: apos deploys 1.2.1-1.2.3, Vercel (frontend) retornava 500 em
+todas as paginas porque CORS do Render (api) so aceitava requests
+da propria URL do Render. Frontend Vercel era rejeitado.
+
+### Fixed
+
+- **`apps/api/src/main.ts`** - CORS agora aceita lista hardcoded
+  de origens alem de `env.NEXTAUTH_URL`:
+  - `env.NEXTAUTH_URL` (Vercel, setado pelo usuario)
+  - `https://controle-credito.onrender.com` (API em prod)
+  - `https://controle-credito.vercel.app` (Vercel alias)
+  - `http://localhost:3000` (dev local)
+  Function-based origin com log de warn para origens rejeitadas
+  (debug mais facil que 500 silencioso).
+
+### Required manual setup (apos merge)
+
+- **Render painel**: editar `NEXTAUTH_URL` para apontar para o
+  frontend (`https://controle-credito.vercel.app`), NAO para a API.
+  Atualmente esta como `https://controle-credito.onrender.com` que
+  faz o link de recovery apontar para a API em vez do frontend.
+
+---
+
 ## [1.2.3-hotfix] - 2026-06-24
 
 Hotfix: apos merge de 1.2.2, deploy Vercel ainda falhava porque
