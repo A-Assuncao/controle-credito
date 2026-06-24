@@ -127,7 +127,15 @@ jobs:
           fi
 
           # Criar role app_system com BYPASSRLS (nao tem no init.sql padrao).
+          # Criado ANTES de rebaixar 'app' - depois do rebaixo, 'app' perde CREATEROLE.
           psql -h localhost -U app -d controle_credito_test -c "CREATE USER app_system WITH PASSWORD 'app_system' BYPASSRLS NOSUPERUSER;"
+          # Rebaixar 'app' para NOSUPERUSER NOBYPASSRLS - CI deve espelhar prod
+          # (rls-hardening-app-system memory). Apos isso, RLS em
+          # users/audit_log passa a ser REAL, nao nominal, e o step
+          # 'Verify RLS' deixa de warnar. Migrations 001-003 continuam
+          # funcionando: pgcrypto eh' trusted extension, resto exige so'
+          # ownership (app eh' owner do DB).
+          psql -h localhost -U app -d controle_credito_test -c "ALTER ROLE app NOSUPERUSER NOBYPASSRLS;"
           # Grants minimos para o systemPool (signup + seed da e2e).
           psql -h localhost -U app -d controle_credito_test -c "GRANT CONNECT ON DATABASE controle_credito_test TO app_system;"
           psql -h localhost -U app -d controle_credito_test -c "GRANT USAGE ON SCHEMA public TO app_system;"
@@ -146,6 +154,7 @@ jobs:
           PGPASSWORD: app
         run: |
           SUPER=$(psql -h localhost -U app -d controle_credito_test -tA -c "SELECT rolsuper FROM pg_roles WHERE rolname='app'")
-          if [ "$SUPER" = "t" ]; then
-            echo "::warning::Role 'app' is SUPERUSER - RLS is being bypassed. See rls-hardening-app_system memory."
+          BYPASS=$(psql -h localhost -U app -d controle_credito_test -tA -c "SELECT rolbypassrls FROM pg_roles WHERE rolname='app'")
+          if [ "$SUPER" = "t" ] || [ "$BYPASS" = "t" ]; then
+            echo "::warning::Role 'app' is SUPERUSER=$SUPER BYPASSRLS=$BYPASS - RLS may be bypassed. See rls-hardening-app_system memory."
           fi
