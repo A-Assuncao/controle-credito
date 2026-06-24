@@ -1,0 +1,91 @@
+name: Semgrep
+
+# SAST (Static Application Security Testing) via Semgrep Community Edition.
+#
+# Diferencas do ci.yml principal:
+# - Roda em container `semgrep/semgrep` (com Semgrep pre-instalado).
+# - NAO bloqueia merge: `continue-on-error: true` no job inteiro. Findings
+#   sao discovery - aparecem no GitHub Security tab e no PR como
+#   annotations. Triagem manual antes de virar gating.
+# - Workflow separado para evitar inchar o ci.yml (que ja' tem 14 steps).
+# - Sem SEMGREP_APP_TOKEN = Community Edition, 100% local, sem cloud,
+#   sem custo, sem limite de findings (diferente de CodeQL free tier
+#   que limita 10/dia em private repo).
+#
+# Triggers:
+# - pull_request: scan em cada PR
+# - push em main: scan completo no merge
+# - schedule semanal: pegar novas vulnerabilidades em deps/regras
+# - workflow_dispatch: manual
+
+on:
+  pull_request: {}
+  push:
+    branches: [main]
+  schedule:
+    # Toda segunda 04:20 UTC. Hora random pra evitar conflito com
+    # outros repos publicos que costumam rodar 00:00 UTC.
+    - cron: '20 4 * * 1'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read          # checkout
+  security-events: write  # upload SARIF pro Security tab
+  actions: read           # pra algumas actions
+
+jobs:
+  semgrep:
+    name: semgrep-oss/scan
+    runs-on: ubuntu-latest
+    # SAST eh' discovery. Encontrou vulnerabilidade -> mostra no PR/Security
+    # tab, nao bloqueia merge. Triagem manual (criar issue, fix, ou
+    # suprimir) eh' feita depois.
+    continue-on-error: true
+
+    # Imagem oficial do Semgrep com CLI + deps pre-instaladas.
+    # Tamanho ~500MB - primeira run demora 30-60s pra puxar.
+    container:
+      image: semgrep/semgrep:latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Semgrep scan (Community Edition, multiple rulesets)
+        # Roda 100% local sem SEMGREP_APP_TOKEN.
+        # Rulesets cobrem:
+        #   p/default         - regras gerais
+        #   p/javascript      - JS especifico
+        #   p/typescript      - TS especifico
+        #   p/owasp-top-ten   - OWASP Top 10
+        #   p/secrets         - secrets hardcoded (complementa GitGuardian)
+        #   p/security-audit  - auditoria geral
+        #
+        # Trade-off do CE: sem "diff-aware scanning" (re-roda tudo a cada
+        # PR). Codebase eh' pequeno (~123 TS files), entao ~30s-1min.
+        # Se virar gargalo, considerar `semgrep ci` com token (cloud).
+        run: |
+          semgrep scan \
+            --config p/default \
+            --config p/javascript \
+            --config p/typescript \
+            --config p/owasp-top-ten \
+            --config p/secrets \
+            --config p/security-audit \
+            --exclude 'node_modules' \
+            --exclude 'dist' \
+            --exclude '.next' \
+            --exclude '.turbo' \
+            --exclude 'test-results' \
+            --exclude 'playwright-report' \
+            --exclude '*.tsbuildinfo' \
+            --sarif \
+            --sarif-output=semgrep.sarif
+
+      - name: Upload SARIF to GitHub Security tab
+        # Upload acontece mesmo se scan teve findings (graças a
+        # continue-on-error no job). 'always()' garante isso.
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
