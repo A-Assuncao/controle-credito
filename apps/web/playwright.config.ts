@@ -35,5 +35,23 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    /**
+     * Viewports mobile: iPhone 13 (iOS Safari-like, 390x844) e Pixel 7
+     * (Android Chrome-like, 412x915). Cada project roda a suite inteira
+     * com a viewport daquele device - descobre issues de layout que
+     * desktop nao pega (texto cortado, overflow horizontal, botoes
+     * inacessiveis pelo touch).
+     *
+     * workers continua em 1 - cada project roda serial. 3 projects x 4
+     * tests = 12 execucoes totais, ~10-20s em CI.
+     */
+    {
+      name: 'mobile-ios',
+      use: { ...devices['iPhone 13'] },
+    },
+    {
+      name: 'mobile-android',
+      use: { ...devices['Pixel 7'] },
+    },
   ],
 });
