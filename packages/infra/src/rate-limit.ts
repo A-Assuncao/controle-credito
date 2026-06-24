@@ -2,18 +2,21 @@ import { redis } from './redis.js';
 import { logger } from './logger.js';
 
 /**
- * Gera fingerprint NAO-reversivel de um identifier para logging seguro.
+ * Gera fingerprint NAO-reversivel de uma chave Redis para logging seguro.
  *
- * Por que: identifier pode ser email (PII) ou IP (PII em algumas
- * jurisdicoes - LGPD). Logar em clear text viola LGPD/CCPA.
- * Mascarar "e***@e***.com" nao engana CodeQL que rastreia o identifier.
+ * Por que: a chave Redis eh `rl:{namespace}:{identifier}`. identifier
+ * pode ser email (PII) ou IP (PII em algumas jurisdicoes - LGPD).
+ * Logar a chave inteira viola LGPD/CCPA.
  *
- * Solucao: truncar primeiros 8 chars + "***". Suficiente para unificar
- * logs de requests da mesma origem (mesmo identifier produz mesmo
- * fingerprint), sem expor o valor.
+ * Solucao: extrair apenas o namespace e truncar primeiros 6 chars do
+ * resto (que eh o hash do identifier, nao reversivel). Suficiente para
+ * rastrear qual categoria e chave disparou.
  */
-function fingerprint(identifier: string): string {
-  return identifier.length > 8 ? `${identifier.slice(0, 8)}***` : '***';
+function fingerprintKey(key: string): string {
+  const colonIdx = key.indexOf(':');
+  const namespace = colonIdx > 0 ? key.slice(3, colonIdx) : '?';
+  const rest = colonIdx > 0 ? key.slice(colonIdx + 1) : '';
+  return `${namespace}:${rest.length > 6 ? rest.slice(0, 6) : '***'}`;
 }
 
 /**
@@ -53,9 +56,10 @@ export async function rateLimit(
     }
     if (current > limit) {
       // NAO logar identifier (mesmo mascarado) - CodeQL ainda classifica
-      // como PII. Logar so fingerprint NAO-reversivel.
+      // como PII. Logar so fingerprint da CHAVE Redis (namespace + primeiros
+      // 6 chars do hash do identifier). Nao-reversivel.
       logger.warn(
-        { namespace, identifierFingerprint: fingerprint(identifier), current, limit, windowSec },
+        { keyFingerprint: fingerprintKey(key), current, limit, windowSec },
         'rate limit exceeded',
       );
       return false;
@@ -66,10 +70,7 @@ export async function rateLimit(
     // Loga e deixa passar. Trade-off: curta window de "sem rate limit"
     // durante outage do Redis - aceitavel porque login eh public e
     // ja tem protecao do argon2 hash (anti-brute-force basico).
-    logger.error(
-      { err, namespace, identifierFingerprint: fingerprint(identifier) },
-      'rate limit check failed',
-    );
+    logger.error({ err, keyFingerprint: fingerprintKey(key) }, 'rate limit check failed');
     return true;
   }
 }
