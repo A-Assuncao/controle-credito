@@ -25,13 +25,18 @@ jobs:
       postgres:
         image: postgres:18
         env:
-          POSTGRES_USER: app
-          POSTGRES_PASSWORD: app
+          # 'postgres' eh' o bootstrap superuser default da imagem.
+          # Criamos 'app' e 'app_system' via SQL no Setup test DB
+          # (a tentativa de ALTER ROLE em 'app' bootstrap falha com
+          # 'permission denied to alter role' - o atributo NOSUPERUSER
+          # precisa ser aplicado na criacao, nao depois).
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: controle_credito_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U app -d controle_credito_test"
+          --health-cmd "pg_isready -U postgres -d controle_credito_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -106,41 +111,55 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
       - name: Setup test DB (migrations + role + grants)
-        # Prepara o test DB: cria app_system com BYPASSRLS e da os GRANTs
-        # necessarios. Host: localhost (port mapping do service).
+        # Prepara o test DB: cria roles 'app' (NOSUPERUSER NOBYPASSRLS) e
+        # 'app_system' (BYPASSRLS NOSUPERUSER) via SQL, da ownership do DB
+        # pra 'app', e grants minimos pra 'app_system'.
+        #
+        # Por que conectar como 'postgres' (bootstrap superuser) e nao como
+        # 'app' direto: 'app' eh' criado AQUI, ainda nao existe.
+        #
+        # Espelha prod: 'app' eh' role normal (sem SUPERUSER/BYPASSRLS),
+        # entao RLS em users/audit_log eh' real desde a primeira migration.
         env:
-          PGPASSWORD: app
+          PGPASSWORD_SUPER: ${{ secrets.POSTGRES_PASSWORD }}
+          PGPASSWORD_APP: ${{ secrets.POSTGRES_APP_PASSWORD }}
+          PGPASSWORD_APP_SYSTEM: ${{ secrets.POSTGRES_APP_SYSTEM_PASSWORD }}
         run: |
-          # Espera Postgres aceitar queries reais. Usa 'psql -c SELECT 1'
-          # porque eh' mais robusto que pg_isready (testa o caminho
-          # completo TCP + auth + query, nao so' socket).
+          # Espera Postgres aceitar queries reais. Conecta como 'postgres'
+          # (superuser nao-bootstrap, com CREATEROLE).
           for i in $(seq 1 30); do
-            if psql -h localhost -p 5432 -U app -d controle_credito_test -c "SELECT 1" -q -tA >/dev/null 2>&1; then
+            if PGPASSWORD="$PGPASSWORD_SUPER" psql -h localhost -p 5432 -U postgres -d controle_credito_test -c "SELECT 1" -q -tA >/dev/null 2>&1; then
               echo "Postgres ready after ${i}s"
               break
             fi
             sleep 1
           done
-          if ! psql -h localhost -p 5432 -U app -d controle_credito_test -c "SELECT 1" -q -tA >/dev/null 2>&1; then
+          if ! PGPASSWORD="$PGPASSWORD_SUPER" psql -h localhost -p 5432 -U postgres -d controle_credito_test -c "SELECT 1" -q -tA >/dev/null 2>&1; then
             echo "::error::Postgres nao ficou pronto em 30s"
             exit 1
           fi
 
-          # Criar role app_system com BYPASSRLS (nao tem no init.sql padrao).
-          # Criado ANTES de rebaixar 'app' - depois do rebaixo, 'app' perde CREATEROLE.
-          psql -h localhost -U app -d controle_credito_test -c "CREATE USER app_system WITH PASSWORD 'app_system' BYPASSRLS NOSUPERUSER;"
-          # Rebaixar 'app' para NOSUPERUSER NOBYPASSRLS - CI deve espelhar prod
-          # (rls-hardening-app-system memory). Apos isso, RLS em
-          # users/audit_log passa a ser REAL, nao nominal, e o step
-          # 'Verify RLS' deixa de warnar. Migrations 001-003 continuam
-          # funcionando: pgcrypto eh' trusted extension, resto exige so'
-          # ownership (app eh' owner do DB).
-          psql -h localhost -U app -d controle_credito_test -c "ALTER ROLE app NOSUPERUSER NOBYPASSRLS;"
+          # Limpa 'app'/'app_system' se existirem (defesa contra reuso
+          # de data dir em debug local; no CI o container eh' novo a
+          # cada run, entao esse DROP eh' no-op normalmente).
+          PGPASSWORD="$PGPASSWORD_SUPER" psql -h localhost -U postgres -d controle_credito_test -c "DROP ROLE IF EXISTS app;" >/dev/null 2>&1 || true
+          PGPASSWORD="$PGPASSWORD_SUPER" psql -h localhost -U postgres -d controle_credito_test -c "DROP ROLE IF EXISTS app_system;" >/dev/null 2>&1 || true
+
+          # Cria os dois roles. NAO sao bootstrap superusers, entao o
+          # atributo NOSUPERUSER eh' permanente.
+          PGPASSWORD="$PGPASSWORD_SUPER" psql -h localhost -U postgres -d controle_credito_test -c "CREATE USER app WITH PASSWORD '$PGPASSWORD_APP' NOSUPERUSER NOBYPASSRLS;"
+          PGPASSWORD="$PGPASSWORD_SUPER" psql -h localhost -U postgres -d controle_credito_test -c "CREATE USER app_system WITH PASSWORD '$PGPASSWORD_APP_SYSTEM' BYPASSRLS NOSUPERUSER;"
+
+          # Da ownership do DB pro 'app'. Sem isso, migrations como 'app'
+          # falhariam com 'must be owner of database'. Tambem inclui o
+          # schema public implicitamente (owner do DB eh' owner do public).
+          PGPASSWORD="$PGPASSWORD_SUPER" psql -h localhost -U postgres -d controle_credito_test -c "ALTER DATABASE controle_credito_test OWNER TO app;"
+
           # Grants minimos para o systemPool (signup + seed da e2e).
-          psql -h localhost -U app -d controle_credito_test -c "GRANT CONNECT ON DATABASE controle_credito_test TO app_system;"
-          psql -h localhost -U app -d controle_credito_test -c "GRANT USAGE ON SCHEMA public TO app_system;"
-          psql -h localhost -U app -d controle_credito_test -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_system;"
-          psql -h localhost -U app -d controle_credito_test -c "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_system;"
+          PGPASSWORD="$PGPASSWORD_SUPER" psql -h localhost -U postgres -d controle_credito_test -c "GRANT CONNECT ON DATABASE controle_credito_test TO app_system;"
+          PGPASSWORD="$PGPASSWORD_SUPER" psql -h localhost -U postgres -d controle_credito_test -c "GRANT USAGE ON SCHEMA public TO app_system;"
+          PGPASSWORD="$PGPASSWORD_SUPER" psql -h localhost -U postgres -d controle_credito_test -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_system;"
+          PGPASSWORD="$PGPASSWORD_SUPER" psql -h localhost -U postgres -d controle_credito_test -c "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_system;"
 
       - name: Apply migrations
         run: pnpm db:migrate
@@ -151,7 +170,7 @@ jobs:
         # nominal, nao real). Este step nao falha o CI - eh so um aviso
         # para detectar drift na configuracao do role.
         env:
-          PGPASSWORD: app
+          PGPASSWORD: ${{ secrets.POSTGRES_APP_PASSWORD }}
         run: |
           SUPER=$(psql -h localhost -U app -d controle_credito_test -tA -c "SELECT rolsuper FROM pg_roles WHERE rolname='app'")
           BYPASS=$(psql -h localhost -U app -d controle_credito_test -tA -c "SELECT rolbypassrls FROM pg_roles WHERE rolname='app'")
