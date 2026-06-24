@@ -15,6 +15,7 @@ publicHoistPattern:
 
 allowBuilds:
   '@nestjs/core': true
+  '@sentry/cli': true
   '@swc/core': true
   argon2: true
   esbuild: true
