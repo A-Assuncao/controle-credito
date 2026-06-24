@@ -42,6 +42,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 - `.github/workflows/ci.yml`: `pnpm/action-setup` v4 → v6, `version: 9 → 11`, `node-version: 22 → 24`. Postgres 18 e Redis 7 mantidos.
 - `apps/api/package.json`: `@nestjs/{common,core,platform-express,testing}` `^10.4.4` → `^11.1.6`. Compatibilidade de engines confirmada (`engines.node >= 20` no NestJS 11); sem breaking changes no código atual. Suite e2e (16/16) e unit (5/5) verde localmente.
 - `apps/api/scripts/run-e2e.js`: `cwd` ajustado de `dirname(fileURLToPath(import.meta.url))` (= `apps/api/scripts/`) para `dirname(here)` (= `apps/api/`), onde `vitest.config.e2e.ts` e os testes em `test/e2e/` realmente ficam. O vitest 3.x resolve `--config <path>` relativo ao CWD; o `cwd: here` antigo so funcionava quando o path era passado absoluto (mudanca de comportamento menor no vitest 3.2.6).
+- `apps/web/package.json`: `next ^15.0.0 → ^16.2.9`, `next-auth 5.0.0-beta.20 → 5.0.0-beta.31` (peer aceita Next 16 oficialmente). Script `lint`: `next lint` → `eslint src` (Next 16 removeu `next lint`).
+- `apps/web/src/middleware.ts` → `apps/web/src/proxy.ts` (rename obrigatorio no Next 16). Conteudo preservado (`auth()` do NextAuth funciona identico no `proxy.ts`).
+- `package.json` (raiz): adicionado `@playwright/test` deps para Chromium e deps de sistema instaladas via `apt install -y libnspr4 libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2t64` no WSL Ubuntu (Chromium headless).
 
 ---
 
