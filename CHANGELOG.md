@@ -5,6 +5,22 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.2.8-hotfix] - 2026-06-24
+
+Hotfix: CI Docker continua falhando apos 1.2.7 (apps/contracts
+removido). Agora o erro eh em `apps/web/public`.
+
+### Fixed
+
+- **`apps/web/Dockerfile`**: remover `COPY apps/web/public` espurio.
+  Diretorio nunca existiu no repo (confirmado via `git show
+  22d8b55:apps/web/public`). O Dockerfile original (commit
+  `22d8b55`) ja tinha esse bug. Ficou escondido por 2 versoes
+  porque o CI Docker nao eh o deploy real (Vercel faz seu proprio
+  build via `bash vercel-build.sh`).
+
+---
+
 ## [1.2.7-hotfix] - 2026-06-24
 
 Hotfix: 2 erros de CI descobertos apos 1.2.6.

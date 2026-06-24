@@ -86,10 +86,10 @@ WORKDIR /app
 # Copia saida standalone + assets. Next gera:
 # - .next/standalone/  - server.js + node_modules production-only
 # - .next/static/     - arquivos estaticos (CSS, JS chunks)
-# - public/           - public assets
+# (NAO copiamos apps/web/public porque o diretorio nao existe no repo
+# - assets estaticos sao servidos via .next/static)
 COPY --from=builder --chown=node:node /repo/apps/web/.next/standalone ./
 COPY --from=builder --chown=node:node /repo/apps/web/.next/static ./.next/static
-COPY --from=builder --chown=node:node /repo/apps/web/public ./public
 
 ENV NODE_ENV=production \
     PORT_WEB=3000 \
