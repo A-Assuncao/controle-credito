@@ -1,3 +1,10 @@
+/**
+ * IMPORTANTE: instrument.ts deve ser importado PRIMEIRO para que o
+ * SDK do Sentry consiga capturar erros durante o bootstrap do Nest.
+ * Sem isso, exceptions em modulos init ou no listen() nao seriam
+ * reportados.
+ */
+import './instrument.js';
 import 'reflect-metadata';
 import cookieParser from 'cookie-parser';
 import { NestFactory } from '@nestjs/core';
