@@ -1,0 +1,137 @@
+# docker-compose.preview.yml
+#
+# Stack completa pra testar preview deploy localmente antes de subir
+# pra Vercel/Render/Neon. Simula o ambiente de producao:
+# - Postgres 18 com RLS
+# - Redis 7
+# - apps/api (NestJS)
+# - apps/web (Next.js)
+#
+# Portas alternativas (nao conflita com wsl-up dev):
+# - Postgres: 5433 (dev usa 5432)
+# - Redis: 6380 (dev usa 6379)
+# - API: 3002 (dev usa 3001)
+# - Web: 3003 (dev usa 3000)
+#
+# Como usar:
+#   docker compose -f docker-compose.preview.yml build
+#   docker compose -f docker-compose.preview.yml up
+#   # ou:  pnpm preview:up  (script no package.json raiz, se criado)
+#
+# Pra parar:
+#   docker compose -f docker-compose.preview.yml down
+#
+# Pra testar:
+#   curl http://localhost:3002/health
+#   open http://localhost:3003
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: cc-preview-postgres
+    environment:
+      # 'postgres' eh' o bootstrap superuser default da imagem.
+      # O apps/api cria os roles 'app' e 'app_system' via SQL no setup
+      # test DB (mesma logica do CI). Ver apps/api/src/main.ts ou
+      # migration script.
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: controle_credito_preview
+    ports:
+      - "5433:5432"
+    volumes:
+      - cc-preview-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d controle_credito_preview"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - preview-net
+
+  redis:
+    image: redis:7
+    container_name: cc-preview-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - cc-preview-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - preview-net
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: cc-preview-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Conexoes internas (hostname eh o nome do service no docker network).
+      DATABASE_URL: postgres://app:app@postgres:5432/controle_credito_preview
+      DATABASE_URL_TEST: postgres://app:app@postgres:5432/controle_credito_preview
+      DATABASE_URL_SYSTEM: postgres://app_system:app_system@postgres:5432/controle_credito_preview
+      REDIS_URL: redis://redis:6379
+      NEXTAUTH_SECRET: test-secret-test-secret-test-secret-test-secret-aaaa
+      NEXTAUTH_URL: http://localhost:3003
+      JWT_SECRET: test-jwt-secret-test-jwt-secret-test-jwt-secret-bbbb
+      NODE_ENV: preview
+      LOG_LEVEL: info
+      PORT_API: 3001
+      # Sentry noop em preview (sem DSN).
+      SENTRY_DSN:
+    ports:
+      - "3002:3001"
+    networks:
+      - preview-net
+    # Em prod, o apps/api cria 'app' e 'app_system' via SQL no setup.
+    # Em preview, simulamos isso com um init script.
+    command: >
+      sh -c "until pg_isready -h postgres -p 5432 -U postgres -d controle_credito_preview; do sleep 1; done &&
+            PGPASSWORD=postgres psql -h postgres -U postgres -d controle_credito_preview -c \"CREATE USER app WITH PASSWORD 'app' NOSUPERUSER NOBYPASSRLS;\" || true &&
+            PGPASSWORD=postgres psql -h postgres -U postgres -d controle_credito_preview -c \"CREATE USER app_system WITH PASSWORD 'app_system' BYPASSRLS NOSUPERUSER;\" || true &&
+            PGPASSWORD=postgres psql -h postgres -U postgres -d controle_credito_preview -c \"ALTER DATABASE controle_credito_preview OWNER TO app;\" &&
+            PGPASSWORD=postgres psql -h postgres -U postgres -d controle_credito_preview -c \"GRANT CONNECT ON DATABASE controle_credito_preview TO app_system;\" &&
+            PGPASSWORD=postgres psql -h postgres -U postgres -d controle_credito_preview -c \"GRANT USAGE ON SCHEMA public TO app_system;\" &&
+            PGPASSWORD=postgres psql -h postgres -U postgres -d controle_credito_preview -c \"GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_system;\" &&
+            PGPASSWORD=postgres psql -h postgres -U postgres -d controle_credito_preview -c \"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_system;\" &&
+            node dist/main.js"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: cc-preview-web
+    depends_on:
+      - api
+    environment:
+      # Web chama api via 'api' (hostname do service no docker network).
+      NEXT_PUBLIC_API_URL: http://api:3001
+      NEXTAUTH_URL: http://localhost:3003
+      NEXTAUTH_SECRET: test-secret-test-secret-test-secret-test-secret-aaaa
+      AUTH_SECRET: test-secret-test-secret-test-secret-test-secret-aaaa
+      NODE_ENV: preview
+      PORT_WEB: 3000
+      # Sentry noop.
+      NEXT_PUBLIC_SENTRY_DSN:
+      SENTRY_DSN:
+    ports:
+      - "3003:3000"
+    networks:
+      - preview-net
+
+volumes:
+  cc-preview-postgres-data:
+  cc-preview-redis-data:
+
+networks:
+  preview-net:
+    name: cc-preview-net

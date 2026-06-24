@@ -1,0 +1,81 @@
+name: CI Docker
+
+# CI smoke test dos Dockerfiles + validacao dos workflows YAML.
+# NAO faz push, NAO faz deploy - so garante que tudo compila e os
+# workflows sao validos. Complementa o ci.yml principal (lint/typecheck/test).
+#
+# Triggers:
+# - pull_request: roda em cada PR
+# - push em main: roda no merge
+# - workflow_dispatch: manual
+#
+# Por que separado: build Docker demora ~3-5min. Manter no ci.yml
+# principal incha tempo de feedback pra PRs que nao mexem em Docker.
+
+on:
+  pull_request: {}
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# Default: apenas leitura.
+permissions:
+  contents: read
+
+jobs:
+  # ============================================================
+  # 1. Build Dockerfiles (smoke test, sem push)
+  # ============================================================
+  # NAO usamos `docker build` direto - usamos `docker/build-push-action`
+  # que eh a action oficial e roda em QEMU quando precisa cross-arch.
+  # Aqui fica simples: build local (linux/amd64), sem cache (cache
+  # adiciona complexidade e beneficio marginal pra smoke test).
+  docker-build:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build apps/api Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: false
+          tags: cc-preview-api:test
+          # Sem load - so queremos garantir que o build completa.
+          # NAO roda container no CI (custo).
+
+      - name: Build apps/web Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: false
+          tags: cc-preview-web:test
+
+  # ============================================================
+  # 2. Lint workflow YAMLs
+  # ============================================================
+  # Garante que todos os .github/workflows/*.yml sao sintaticamente
+  # validos. actionlint eh a ferramenta padrao pra isso.
+  workflow-lint:
+    name: Lint workflow YAMLs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download actionlint
+        id: get_actionlint
+        run: |
+          curl -sSL --retry 3 -o /tmp/actionlint.tar.gz \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz
+          tar -xzf /tmp/actionlint.tar.gz -C /tmp
+          echo "/tmp" >> "$GITHUB_PATH"
+
+      - name: Run actionlint
+        env:
+          PATH: /tmp:$PATH
+        run: |
+          actionlint -color

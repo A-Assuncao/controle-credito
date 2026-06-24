@@ -1,0 +1,57 @@
+# Arquivos que NAO devem ir pro contexto do Docker.
+# Reduz tempo de build + tamanho do contexto.
+
+# Dependencias (serao instaladas no builder)
+node_modules
+**/node_modules
+.pnpm-store
+
+# Build outputs (serao gerados no builder)
+dist
+**/dist
+.next
+**/.next
+.turbo
+**/.turbo
+
+# Testes (nao precisa no runtime)
+**/*.spec.ts
+**/*.test.ts
+test
+**/__tests__
+coverage
+**/coverage
+
+# Dev/IDE
+.git
+.gitignore
+**/.git
+**/.gitignore
+.vscode
+**/.vscode
+.idea
+**/.idea
+.DS_Store
+**/.DS_Store
+
+# CI
+.github
+**/.github
+
+# Docs
+*.md
+**/*.md
+docs
+**/docs
+
+# Docker (evita recursao se o Dockerfile do api for buildar via contexto raiz)
+Dockerfile
+.dockerignore
+
+# Env files (secrets NAO vao pra imagem)
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+**/.env.*.local

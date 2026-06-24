@@ -1,0 +1,51 @@
+# Arquivos que NAO devem ir pro contexto do Docker.
+
+# Dependencias
+node_modules
+**/node_modules
+.pnpm-store
+
+# Build outputs (Next gera em .next/)
+.next
+**/.next
+.turbo
+**/.turbo
+dist
+**/dist
+
+# Tests
+**/*.spec.ts
+**/*.test.ts
+**/__tests__
+test-results
+**/test-results
+playwright-report
+**/playwright-report
+coverage
+**/coverage
+
+# Dev/IDE
+.git
+**/.git
+.gitignore
+**/.gitignore
+.vscode
+**/.vscode
+.idea
+**/.idea
+.DS_Store
+**/.DS_Store
+
+# CI
+.github
+**/.github
+
+# Docs
+*.md
+**/*.md
+docs
+**/docs
+
+# Docker
+Dockerfile
+.dockerignore
