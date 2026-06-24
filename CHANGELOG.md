@@ -5,6 +5,26 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.2.3-hotfix] - 2026-06-24
+
+Hotfix: apos merge de 1.2.2, deploy Vercel ainda falhava porque
+`bash` shell do Vercel nao suporta brace expansion (`{a,b,c}`).
+Erro: `ERR_PNPM_RECURSIVE_RUN_NO_SCRIPT: None of the selected
+packages has a "@controle-credito/domain" script`.
+
+### Adicionado
+
+- **`apps/web/vercel-build.sh`** - script bash encapsulando a build
+  chain completa (4 workspace packages + Next.js build). Permite
+  Build Command no painel do Vercel ser apenas `bash vercel-build.sh`
+  (16 chars), dentro do limite de 256. Sem brace expansion.
+
+### Required manual setup (apos merge)
+
+- Vercel painel: mudar Build Command para `bash vercel-build.sh`.
+
+---
+
 ## [1.2.2-hotfix] - 2026-06-24
 
 Hotfix: apos merge de 1.2.1, deploys de preview (Render + Vercel)
