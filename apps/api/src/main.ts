@@ -50,12 +50,15 @@ async function bootstrap(): Promise<void> {
   // Se origin nao veio (same-origin, server-to-server, curl) -> permite.
   const allowedOrigins = [
     env.NEXTAUTH_URL,
-    'https://controle-credito.onrender.com',  // API em prod (caso alguem chame direto)
-    'https://controle-credito.vercel.app',    // Vercel production alias
-    'http://localhost:3000',                  // dev local (apps/web)
+    'https://controle-credito.onrender.com', // API em prod (caso alguem chame direto)
+    'https://controle-credito.vercel.app', // Vercel production alias
+    'http://localhost:3000', // dev local (apps/web)
   ];
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {

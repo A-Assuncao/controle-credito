@@ -5,6 +5,28 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.2.6-hotfix] - 2026-06-24
+
+Hotfix: CI 100% vermelho em todos os PRs recentes. 2 problemas.
+
+### Fixed
+
+- **`.gitattributes` (NOVO)**: `* text=auto eol=lf`. Força LF em
+  todos os arquivos de texto do repo. Sem isso, devs em Windows
+  editam arquivos e commita com CRLF, fazendo Prettier reportar
+  "Delete \r" em 800+ lugares. A longo prazo resolve a fonte do
+  problema (nao apenas os sintomas).
+- **`packages/infra/src/env.ts`**: quebra de linha do enum NODE_ENV
+  (5 valores nao cabem em <100 chars). Prettier queria.
+- **`apps/api/src/main.ts`** + **`apps/web/next-env.d.ts`**:
+  reformatação Prettier (auto-fix de CRLF, espacamento).
+- **`.github/workflows/preview-deploy.yml`**: bug no body do curl
+  Neon API. `-d "{\"parent_id\":null}"` enviava "parent_id":"null"
+  (string) em vez de null JSON. API rejeitava com 400. Fix: heredoc
+  + variavel BODY para garantir null real.
+
+---
+
 ## [1.2.5-hotfix] - 2026-06-24
 
 Hotfix: warnings/erros observados nos logs de producao (Vercel + Render)
