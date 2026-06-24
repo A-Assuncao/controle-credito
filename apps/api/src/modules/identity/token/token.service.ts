@@ -91,10 +91,13 @@ export class TokenService {
     if (mfa !== undefined && mfa !== 'pending' && mfa !== 'verified' && mfa !== 'not_required') {
       throw new Error('JWT payload has invalid mfa claim');
     }
+    // Narrow explicito para o literal - necessario com `exactOptionalPropertyTypes: true`.
+    // A validacao runtime acima garante que so um dos 3 valores (ou undefined) chega aqui.
+    const mfaStatus: AccessTokenPayload['mfa'] = mfa;
     return {
       sub: payload.sub,
       account_id: payload.account_id,
-      ...(mfa !== undefined ? { mfa } : {}),
+      ...(mfaStatus !== undefined ? { mfa: mfaStatus } : {}),
     };
   }
 }

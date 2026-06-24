@@ -5,6 +5,39 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.2.1-hotfix] - 2026-06-24
+
+Hotfix: build de producao (Vercel + Render) estava quebrado com TS2322 em
+`apps/api/src/modules/identity/token/token.service.ts:normalize()`.
+CI reportava typecheck verde, mas o erro so aparecia em `tsc -p
+tsconfig.build.json` (modo emit) usado pelos deploys.
+
+### Fixed
+
+- **TS2322 em `token.service.ts:normalize()`** (linha 94) que bloqueava
+  build de producao. Erro: `Type 'unknown' is not assignable to type
+  '"pending" | "verified" | "not_required"'`.
+  - Causa: `mfa` vinha de `JWTPayload` do `jose` como `unknown`. A
+    validacao runtime na linha 91 (`if (mfa !== undefined && mfa !==
+    'pending' && mfa !== 'verified' && mfa !== 'not_required')`) era
+    correta, mas TypeScript nao conseguia narrow em `mfa: unknown`
+    dentro do spread `...(mfa !== undefined ? { mfa } : {})` por causa
+    de `exactOptionalPropertyTypes: true` no `tsconfig.base.json`.
+  - Fix: `const mfaStatus: AccessTokenPayload['mfa'] = mfa;` antes do
+    spread. Tipo da `const` referencia o literal em `identity.types.ts`
+    (single source of truth). Validacao runtime mantida.
+
+### Investigacao (nao resolvida nesta release)
+
+- **Gap do CI**: o step `@controle-credito/api:typecheck` rodou em ~1ms
+  no ultimo run (2026-06-24 06:55:34) - impossivel para um projeto
+  NestJS. Provavelmente cache hit falso do Turbo ou `tsc` exit imediato
+  sem compilar. Investigar em sessao separada: adicionar
+  `turbo run typecheck --force` ou step explicito de
+  `tsc -p tsconfig.build.json --noEmit` no CI para api.
+
+---
+
 ## [1.3.0-preview] - 2026-06-24
 
 Sprint 2 / item 2: preview deploy por PR. Foco: setup completo
