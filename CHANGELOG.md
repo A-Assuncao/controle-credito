@@ -5,6 +5,41 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.2.2-hotfix] - 2026-06-24
+
+Hotfix: apos merge de 1.2.1, deploys de preview (Render + Vercel)
+falhavam por config de env vars. Render rejeitava `NODE_ENV=preview`
+e faltavam secrets; Vercel warn'dava sobre NEXTAUTH envs nao
+declaradas no turbo.json.
+
+### Fixed
+
+- **`packages/infra/src/env.ts:9`** - enum `NODE_ENV` agora aceita
+  `'preview'` alem de `development`/`test`/`staging`/`production`.
+  Necessario para o Render de preview deploy por PR (que usa
+  `NODE_ENV=preview` conforme `docs/preview-deploy.md`).
+  Backward-compatible: adicionar valor a enum zod nao quebra
+  nenhum caller existente.
+- **`turbo.json`** - adicionado `globalEnv: ["NEXTAUTH_URL", "NEXTAUTH_SECRET"]`
+  e `globalDependencies: ["tsconfig.base.json"]`. Sem isso, Vercel
+  warnava "missing from turbo.json" e as envs nao ficavam disponiveis
+  nos builds dos packages dependentes do infra.
+
+### Required manual setup (apos merge)
+
+- **Vercel painel** (projeto `prj_BK0tNHv05OXUPLJKeTOhXQRMEJTC`):
+  mudar Framework Preset para `Next.js` e Root Directory para
+  `apps/web`. Atualmente auto-detectado como `nestjs` (causa um
+  typecheck framework-aware adicional que falha com TS2322 espurio
+  em arquivos que ja passaram no build do Turbo).
+- **Render painel**: setar `NEXTAUTH_SECRET` (>= 32 chars via
+  `openssl rand -base64 32`), `NEXTAUTH_URL` (URL completa do
+  servico), e `JWT_SECRET` (>= 32 chars). Estas 3 env vars sao
+  obrigatorias em qualquer deploy (validacao via zod em
+  `packages/infra/src/env.ts`).
+
+---
+
 ## [1.2.1-hotfix] - 2026-06-24
 
 Hotfix: build de producao (Vercel + Render) estava quebrado com TS2322 em
