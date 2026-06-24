@@ -107,15 +107,12 @@ jobs:
           # Body: { branch: { name, parent_id } } - parent_id = branch principal.
           # Para simplificar, criamos sem parent_id (usa main por default).
           #
-          # Por que heredoc + variavel: bash dentro de aspas duplas
-          # escapa \" mas mantem como string. Entao
-          #   -d "{\"parent_id\":null}"
-          # envia "parent_id":"null" (string), nao null JSON.
-          # API Neon rejeita com 400. Heredoc garante null real.
-          BODY=$(cat <<EOF
-{"branch":{"name":"${BRANCH_NAME}","parent_id":null}}
-EOF
-)
+          # Por que printf em vez de heredoc: bash dentro de aspas
+          # duplas escapa \" mas mantem como string. printf com single
+          # quotes escapa corretamente e o %s eh substituido. Tambem
+          # evita problemas de indentacao YAML (heredoc com { no inicio
+          # quebra actionlint/YAML parser).
+          BODY=$(printf '{"branch":{"name":"%s","parent_id":null}}' "${BRANCH_NAME}")
           RESPONSE=$(curl -sS -X POST \
             "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches" \
             -H "Authorization: Bearer ${NEON_API_KEY}" \

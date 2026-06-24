@@ -5,6 +5,26 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.2.7-hotfix] - 2026-06-24
+
+Hotfix: 2 erros de CI descobertos apos 1.2.6.
+
+### Fixed
+
+- **`.github/workflows/preview-deploy.yml`**: heredoc bash com JSON
+  na mesma indentacao quebrava YAML parser (actionlint). O `{` no
+  inicio da linha era interpretado como chave YAML esperando `:`.
+  Fix: substituir heredoc por `printf '%s'` que nao tem problema
+  de indentacao.
+- **`apps/web/Dockerfile`**: `COPY apps/contracts/package.json
+  ./apps/contracts/` tentava copiar arquivo de diretorio que NAO
+  EXISTE (so' `packages/contracts/` na raiz). Bug antigo: a tentativa
+  original de tolerar ausencia usava `2>/dev/null || true` (shell
+  syntax, nao Docker) - commit `fc6c81f` removeu isso mas deixou
+  a linha, causando falha permanente. Fix: remover a linha espuria.
+
+---
+
 ## [1.2.6-hotfix] - 2026-06-24
 
 Hotfix: CI 100% vermelho em todos os PRs recentes. 2 problemas.
