@@ -6,7 +6,7 @@ import { z } from 'zod';
  * Sem defaults perigosos: tudo que pode quebrar seguranca precisa ser explicito.
  */
 const EnvSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'staging', 'production']).default('development'),
+  NODE_ENV: z.enum(['development', 'test', 'staging', 'production', 'preview']).default('development'),
   PORT_API: z.coerce.number().int().positive().default(3001),
 
   DATABASE_URL: z.string().min(10),
