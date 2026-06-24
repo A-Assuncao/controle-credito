@@ -101,12 +101,14 @@ Stack decidida em [ADR-0001](docs/adr/0001-stack-runtimes.md) a [ADR-0007](docs/
 | SAST            | Semgrep CE + CodeQL (via GitHub Code Scanning)                                  | 1.x / latest   |
 | Secrets scan    | GitGuardian (integrado no GitHub)                                              | n/a            |
 | CI              | GitHub Actions (Node 24 runners)                                                | ubuntu-latest  |
+| Preview deploy  | Vercel (web) + Render (api) + Neon branching (db)                               | 1.x / latest   |
 | Monorepo        | pnpm workspaces + Turborepo                                                     | 11 / 2.1       |
 
 **Diferencas vs. plano original:**
 - `Auth`: Ory Kratos + Hydra foram **substituidos** por NextAuth v5 (beta.31) + TOTP proprio (decisao em [ADR-0024](docs/adr/0024-auth-nextauth-substitui-kratos.md)). Justificativas: menos peca movel, codigo audita vel, sem subprocessor de identidade.
 - `ORM`: TypeORM foi **substituido** por `pg` direto + 2 pools custom (tenant com RLS, system com BYPASSRLS via role `app_system`).
-- `DB`: PostgreSQL 18 (CI/dev local, no WSL); producao ainda em escolha (Neon ou RDS).
+- `DB**: PostgreSQL 18 (CI/dev local, no WSL); producao ainda em escolha (Neon ou RDS).
+- `Preview deploy`: cada PR sobe pra Vercel (web) + Render (api) + Neon branch (db). Isolamento total entre PRs. Setup detalhado em [docs/preview-deploy.md](docs/preview-deploy.md).
 
 ---
 

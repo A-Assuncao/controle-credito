@@ -23,6 +23,11 @@
 #   --setup-node    Instala Node 24 LTS + pnpm 11 via nvm+corepack. Resolver o
 #                   gotcha `exec: node: not found` em `pnpm db:migrate` no WSL.
 #                   Idempotente.
+#   --preview       Sobe a stack completa (Postgres+Redis+api+web) via
+#                   docker-compose.preview.yml. Simula o ambiente de preview
+#                   deploy (Vercel + Render + Neon). Requer Docker.
+#   --preview-down  Para a stack de preview.
+#   --preview-build Builda as imagens sem subir.
 #
 # Saindo no meio, eh seguro re-rodar: tudo abaixo eh idempotente.
 #
@@ -227,6 +232,99 @@ BASHRC_EOF
     wsl-up
 EOF
   exit 0
+fi
+
+# ---------- --preview / --preview-down / --preview-build: stack via docker compose ----------
+# Uso: ./scripts/wsl-up.sh --preview [--down|--build]
+#
+# Sobe Postgres 18 + Redis 7 + apps/api + apps/web via
+# docker-compose.preview.yml. Simula o ambiente de preview deploy
+# (Vercel + Render + Neon) localmente.
+#
+# Portas alternativas (nao conflitam com dev local):
+#   Postgres: 5433  (dev usa 5432)
+#   Redis:    6380  (dev usa 6379)
+#   API:      3002  (dev usa 3001)
+#   Web:      3003  (dev usa 3000)
+#
+# Requer Docker (Docker Desktop com WSL2 integration ou docker.io nativo).
+# Idempotente: re-rodar so re-sobe containers.
+if [ "${1:-}" = "--preview" ] || [ "${1:-}" = "--preview-down" ] || [ "${1:-}" = "--preview-build" ]; then
+  # Carrega funcoes de log (mesmo truque do --setup-node).
+  if ! type ok >/dev/null 2>&1; then
+    if [ -t 1 ]; then
+      C_RED=$'\033[31m'; C_GRN=$'\033[32m'; C_YEL=$'\033[33m'
+      C_BLU=$'\033[34m'; C_DIM=$'\033[2m';  C_RST=$'\033[0m'
+    else
+      C_RED=''; C_GRN=''; C_YEL=''; C_BLU=''; C_DIM=''; C_RST=''
+    fi
+    ok()   { printf "  %s[ok]%s %s\n"   "$C_GRN" "$C_RST" "$1"; }
+    warn() { printf "  %s[warn]%s %s\n" "$C_YEL" "$C_RST" "$1"; }
+    fail() { printf "  %s[fail]%s %s\n" "$C_RED" "$C_RST" "$1"; }
+    info() { printf "%s%s%s\n" "$C_BLU" "$1" "$C_RST"; }
+    dim()  { printf "%s%s%s\n" "$C_DIM" "$1" "$C_RST"; }
+  fi
+
+  # Confirma WSL (mesmo guarda do final do script).
+  if ! grep -qiE "microsoft|wsl" /proc/version 2>/dev/null; then
+    fail "Este sub-comando so roda dentro do WSL."
+    exit 1
+  fi
+
+  # Confirma que Docker esta' disponivel.
+  if ! command -v docker >/dev/null 2>&1; then
+    fail "docker nao encontrado. Instale Docker Desktop (WSL2 integration)"
+    dim  "  ou: sudo apt install -y docker.io (e adicione seu user ao grupo docker)"
+    exit 1
+  fi
+
+  REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+  COMPOSE_FILE="${REPO_ROOT}/docker-compose.preview.yml"
+
+  if [ ! -f "$COMPOSE_FILE" ]; then
+    fail "Arquivo nao encontrado: ${COMPOSE_FILE}"
+    exit 1
+  fi
+
+  case "${1:-}" in
+    --preview-down)
+      info "==> Derrubando stack de preview"
+      (cd "$REPO_ROOT" && docker compose -f docker-compose.preview.yml down)
+      ok "Stack de preview parada"
+      info "Para subir de novo: wsl-up --preview"
+      exit 0
+      ;;
+    --preview-build)
+      info "==> Buildando imagens de preview (sem subir)"
+      (cd "$REPO_ROOT" && docker compose -f docker-compose.preview.yml build)
+      ok "Build concluido"
+      exit 0
+      ;;
+    --preview|*)
+      info "==> Subindo stack de preview (Postgres+Redis+api+web)"
+      (cd "$REPO_ROOT" && docker compose -f docker-compose.preview.yml up -d --build)
+      ok "Stack de preview UP"
+      cat <<EOF
+
+  ${C_GRN}Servicos disponiveis:${C_RST}
+    Postgres 18 em localhost:5433   (preview DB: controle_credito_preview)
+    Redis 7    em localhost:6380
+    API  (NestJS)  em localhost:3002
+    Web  (Next.js) em localhost:3003
+
+  ${C_GRN}Para testar:${C_RST}
+    curl http://localhost:3002/health
+    open http://localhost:3003
+
+  ${C_GRN}Para ver logs:${C_RST}
+    docker compose -f docker-compose.preview.yml logs -f
+
+  ${C_GRN}Para parar:${C_RST}
+    wsl-up --preview-down
+EOF
+      exit 0
+      ;;
+  esac
 fi
 
 # ---------- 0. Guardas ----------

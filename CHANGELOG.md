@@ -5,6 +5,47 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.3.0-preview] - 2026-06-24
+
+Sprint 2 / item 2: preview deploy por PR. Foco: setup completo
+(workflow + Dockerfiles + docs + compose) que o usuario conecta em
+Vercel/Render/Neon no browser.
+
+### Adicionado
+
+- **Preview deploy por PR** completo (Vercel + Render + Neon branching).
+  - `apps/api/Dockerfile` (multi-stage, Node 24, argon2 build deps,
+    imagem final ~150MB).
+  - `apps/web/Dockerfile` (multi-stage, Next.js standalone output).
+  - `apps/web/next.config.ts`: `output: 'standalone'` adicionado.
+  - `.dockerignore` em apps/api e apps/web (reduz contexto de build).
+  - `docker-compose.preview.yml`: stack completa (Postgres+Redis+api+web)
+    em portas alternativas (5433/6380/3002/3003) pra nao conflitar com dev.
+  - `scripts/wsl-up.sh`: comandos `--preview`, `--preview-down`,
+    `--preview-build` adicionados.
+  - `.github/workflows/preview-deploy.yml`: detecta mudancas, cria
+    Neon branch, dispara Vercel/Render deploy hooks, comenta URLs
+    no PR. Cleanup automatico do Neon branch no PR close.
+  - `docs/preview-deploy.md`: guia completo de setup (contas externas,
+    secrets, troubleshooting).
+  - `docs/preview-deploy.md`: exemplo de CORS com dominio Vercel.
+
+### Mudanca de escopo vs. master-plan
+
+- **Master-plan previa "preview deploy por PR (Neon branch + Vercel/Render)"** - linha 246.
+- **Esta task implementa o setup completo** (workflow + Dockerfiles + docs).
+- **Deploy real fica pra o usuario conectar** (criar contas Vercel/Render/Neon
+  e setar secrets no GitHub).
+
+### Nao-objetivos (deferrred pra proximas sprints)
+
+- SMS recovery (Sprint 2 v2).
+- Provider concreto de email (Postmark/Resend) (Sprint 2 v2).
+- CORS por env var (precisa adicionar CORS_ORIGIN no NestJS).
+- Auto-cleanup de branches no Vercel/Render (alem do Neon).
+
+---
+
 ## [1.2.0-recovery] - 2026-06-24
 
 Sprint 2 / item 1: recuperacao de senha via email (link magico). PR mergeado: #10.

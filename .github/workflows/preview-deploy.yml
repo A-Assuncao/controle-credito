@@ -1,0 +1,299 @@
+name: Preview Deploy
+
+# Preview deploy por PR. Cria um ambiente isolado com:
+# - apps/web deployado no Vercel (PR Preview automatico)
+# - apps/api deployado no Render (PR Preview via deploy hook)
+# - Banco de dados Neon branch (fork do main, descartado no PR close)
+#
+# Secrets necessarios (configure no GitHub repo Settings > Secrets):
+#   NEON_API_KEY           - Neon API key (https://console.neon.tech)
+#   NEON_PROJECT_ID        - Neon project ID (encontra na URL do projeto)
+#   VERCEL_DEPLOY_HOOK     - Vercel deploy hook URL (Deploy Hooks tab)
+#   RENDER_DEPLOY_HOOK     - Render deploy hook URL (Settings > Deploy Hook)
+#   GITHUB_TOKEN           - auto-provided (commenta PR)
+#
+# IMPORTANTE: este workflow NAO faz deploy real. Ele chama as APIs das
+# plataformas (Neon, Vercel, Render) que fazem o deploy. Vc precisa
+# ter contas nessas plataformas e setar os secrets acima.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches: [main]
+  # Manual trigger pra debug ou PRs que nao sao de main.
+  workflow_dispatch:
+
+# Concurrency: cancela runs anteriores do mesmo PR. Evita flood de
+# previews quando user faz push em sequencia.
+concurrency:
+  group: preview-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write  # comentar no PR
+  actions: read         # verificar contexto
+
+jobs:
+  # ============================================================
+  # 1. Detect changes - identifica quais workspaces mudaram
+  # ============================================================
+  detect-changes:
+    name: Detect changed workspaces
+    runs-on: ubuntu-latest
+    outputs:
+      api-changed: ${{ steps.check.outputs.api-changed }}
+      web-changed: ${{ steps.check.outputs.web-changed }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: check
+        run: |
+          # diff entre base do PR e head. Lista de paths modificados.
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+
+          if [ -z "$BASE" ] || [ -z "$HEAD" ]; then
+            # workflow_dispatch ou PR sem base (improvavel) - default: roda tudo.
+            echo "api-changed=true" >> "$GITHUB_OUTPUT"
+            echo "web-changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CHANGED_PATHS=$(git diff --name-only "$BASE" "$HEAD")
+
+          if echo "$CHANGED_PATHS" | grep -qE '^apps/api/|^packages/'; then
+            echo "api-changed=true" >> "$GITHUB_OUTPUT"
+            echo "  apps/api ou packages/ mudaram - api precisa rebuild"
+          else
+            echo "api-changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if echo "$CHANGED_PATHS" | grep -qE '^apps/web/|^packages/'; then
+            echo "web-changed=true" >> "$GITHUB_OUTPUT"
+            echo "  apps/web ou packages/ mudaram - web precisa rebuild"
+          else
+            echo "web-changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ============================================================
+  # 2. Create Neon branch (banco isolado por PR)
+  # ============================================================
+  # Neon branching: cada PR = um branch do Postgres.
+  # Branch eh criado do parent (main), usado pelo apps/api via DATABASE_URL
+  # customizado no Render (env var por Preview deployment).
+  create-neon-branch:
+    name: Create Neon DB branch
+    needs: detect-changes
+    if: needs.detect-changes.outputs.api-changed == 'true' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Neon branch for PR
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$NEON_API_KEY" ] || [ -z "$NEON_PROJECT_ID" ]; then
+            echo "::warning::NEON_API_KEY ou NEON_PROJECT_ID nao configurado. Pulando."
+            exit 0
+          fi
+
+          BRANCH_NAME="preview-pr-${PR_NUMBER}"
+          echo "Criando Neon branch: ${BRANCH_NAME}"
+
+          # API Neon: POST /api/v2/projects/{project_id}/branches
+          # Body: { branch: { name, parent_id } } - parent_id = branch principal.
+          # Para simplificar, criamos sem parent_id (usa main por default).
+          RESPONSE=$(curl -sS -X POST \
+            "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches" \
+            -H "Authorization: Bearer ${NEON_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{\"branch\":{\"name\":\"${BRANCH_NAME}\",\"parent_id\":null}}")
+
+          BRANCH_ID=$(echo "$RESPONSE" | jq -r '.branch.id')
+          CONNECTION_STRING=$(echo "$RESPONSE" | jq -r '.branch.connection_string')
+
+          if [ "$BRANCH_ID" = "null" ] || [ -z "$BRANCH_ID" ]; then
+            echo "::error::Falha ao criar Neon branch"
+            echo "Response: $RESPONSE"
+            exit 1
+          fi
+
+          echo "Neon branch criado: id=${BRANCH_ID}"
+          echo "Connection string: $CONNECTION_STRING" >> "$GITHUB_OUTPUT"
+
+          # Salva connection_string em artifact pra outros jobs consumirem.
+          mkdir -p /tmp/neon
+          echo "$CONNECTION_STRING" > /tmp/neon/connection_string.txt
+          echo "$BRANCH_ID" > /tmp/neon/branch_id.txt
+
+      - name: Upload Neon info artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: neon-preview-${{ github.event.pull_request.number }}
+          path: /tmp/neon/
+          retention-days: 7
+
+  # ============================================================
+  # 3. Cleanup Neon branch (quando PR fecha)
+  # ============================================================
+  cleanup-neon-branch:
+    name: Cleanup Neon branch
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Neon branch
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$NEON_API_KEY" ] || [ -z "$NEON_PROJECT_ID" ]; then
+            echo "::warning::Secrets nao configurados. Pulando cleanup."
+            exit 0
+          fi
+
+          BRANCH_NAME="preview-pr-${PR_NUMBER}"
+          echo "Removendo Neon branch: ${BRANCH_NAME}"
+
+          # Listar branches, encontrar o ID, deletar.
+          BRANCH_ID=$(curl -sS \
+            "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches" \
+            -H "Authorization: Bearer ${NEON_API_KEY}" | \
+            jq -r ".branches[] | select(.name==\"${BRANCH_NAME}\") | .id")
+
+          if [ -n "$BRANCH_ID" ] && [ "$BRANCH_ID" != "null" ]; then
+            curl -sS -X DELETE \
+              "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches/${BRANCH_ID}" \
+              -H "Authorization: Bearer ${NEON_API_KEY}" || true
+            echo "Neon branch ${BRANCH_NAME} removido"
+          else
+            echo "Branch ${BRANCH_NAME} nao encontrado (ja removido?)"
+          fi
+
+  # ============================================================
+  # 4. Trigger Vercel deploy (frontend)
+  # ============================================================
+  # Vercel nao precisa de Docker image - ele faz o build do Next.js
+  # do source. Deploy Hook eh uma URL que, quando acionada, faz
+  # rebuild do branch/PR especificado.
+  # Setup: Vercel > Project > Settings > Git > Deploy Hooks.
+  trigger-vercel:
+    name: Trigger Vercel deploy
+    needs: [detect-changes, create-neon-branch, cleanup-neon-branch]
+    # Roda se web mudou E NAO estamos fechando o PR. O `always()` eh'
+    # necessario pq cleanup-neon-branch pode ter rodado, mas
+    # queremos que trigger-vercel pule no close (acao diferente).
+    if: needs.detect-changes.outputs.web-changed == 'true' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel deploy hook
+        env:
+          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$VERCEL_DEPLOY_HOOK" ]; then
+            echo "::warning::VERCEL_DEPLOY_HOOK nao configurado. Pulando."
+            exit 0
+          fi
+
+          # Vercel Deploy Hook ja vem com branch no param, mas PR Preview
+          # eh automatico quando Vercel conecta no GitHub. O hook eh so
+          # um trigger para forcar rebuild.
+          echo "Triggering Vercel deploy hook para PR #${PR_NUMBER}"
+          HTTP_STATUS=$(curl -sS -o /tmp/vercel_response.txt -w "%{http_code}" \
+            -X POST "$VERCEL_DEPLOY_HOOK" \
+            -H "Content-Type: application/json" \
+            -d "{\"branch\":\"feat/preview-pr-${PR_NUMBER}\"}")
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "Vercel deploy hook acionado (HTTP $HTTP_STATUS)"
+          else
+            echo "::warning::Vercel deploy hook retornou HTTP $HTTP_STATUS"
+            cat /tmp/vercel_response.txt
+          fi
+
+  # ============================================================
+  # 5. Trigger Render deploy (backend)
+  # ============================================================
+  # Render tem Deploy Hook que aciona redeploy do servico com branch
+  # especificado. Nos configuramos o servico pra escutar PR branches
+  # (auto-deploy) ou usamos o hook pra forcar.
+  # Render espera env vars customizados por Preview (DATABASE_URL do
+  # Neon branch, REDIS_URL compartilhado, etc). Esses env vars sao
+  # configurados uma vez no dashboard do Render (manualmente).
+  trigger-render:
+    name: Trigger Render deploy
+    needs: [detect-changes, create-neon-branch]
+    if: needs.detect-changes.outputs.api-changed == 'true' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy hook
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "::warning::RENDER_DEPLOY_HOOK nao configurado. Pulando."
+            exit 0
+          fi
+
+          # Render nao aceita param branch no deploy hook (sempre faz
+          # deploy do branch que esta configurado no servico). Mas o
+          # servico pode ter auto-deploy por PR branch, ou vc configura
+          # uma vez pra sempre pegar do PR branch.
+          #
+          # Para Preview funcionar: no Render Dashboard > Service >
+          # Settings > Build & Deploy > Branch: "feat/preview-pr-*" (wildcard).
+          # Assim cada PR dispara deploy automatico.
+          #
+          # O hook aqui serve pra forcar rebuild se quiser (ex: mudou
+          # secrets externos).
+          echo "Triggering Render deploy hook para PR #${PR_NUMBER}"
+          HTTP_STATUS=$(curl -sS -o /tmp/render_response.txt -w "%{http_code}" \
+            -X POST "$RENDER_DEPLOY_HOOK" \
+            -H "Accept: application/json")
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "Render deploy hook acionado (HTTP $HTTP_STATUS)"
+          else
+            echo "::warning::Render deploy hook retornou HTTP $HTTP_STATUS"
+            cat /tmp/render_response.txt
+          fi
+
+  # ============================================================
+  # 6. Comment PR with preview URLs
+  # ============================================================
+  comment-pr:
+    name: Comment PR with preview URLs
+    needs: [detect-changes, create-neon-branch, trigger-vercel, trigger-render]
+    if: github.event.action != 'closed' && (needs.detect-changes.outputs.api-changed == 'true' || needs.detect-changes.outputs.web-changed == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment preview URLs on PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          # Vercel/Render expoem URLs previsiveis por PR. Substitua pelos
+          # patterns reais do seu setup.
+          VERCEL_PR_URL: ${{ vars.VERCEL_PR_URL_PREFIX || format('https://controle-credito-pr-{0}.vercel.app', github.event.pull_request.number) }}
+          RENDER_PR_URL: ${{ vars.RENDER_PR_URL_PREFIX || format('https://controle-credito-api-pr-{0}.onrender.com', github.event.pull_request.number) }}
+        run: |
+          # Constroi body do comentario usando here-string (simples,
+          # sem heredoc pra evitar problemas de escape no YAML literal).
+          VERCEL_URL="$VERCEL_PR_URL"
+          RENDER_URL="$RENDER_PR_URL"
+          PR_NUM="$PR_NUMBER"
+
+          # Usa gh CLI pra comentar (mais simples que curl).
+          {
+            echo "| Service | URL |"
+            echo "| --- | --- |"
+            echo "| Web (Vercel) | ${VERCEL_URL} |"
+            echo "| API (Render) | ${RENDER_URL} |"
+            echo "| Neon DB | branch preview-pr-${PR_NUM} |"
+          } | gh pr comment "$PR_NUM" --body-file - || true
+
+          echo "PR #${PR_NUM} comentado com URLs de preview"
