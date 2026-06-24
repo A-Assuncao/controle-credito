@@ -5,23 +5,72 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ---
 
+## [1.1.0-sast] - 2026-06-24
+
+Sprint 1.5 / fechamento de diferidos da Sprint 1. Encerramento: 9/9 itens.
+PRs mergeados: #1-#8. Main em `71194cf`.
+
+### Adicionado
+
+- **TTL de refresh token configuravel (default 12h)** via `SESSION_TTL_HOURS` env (commit `17d64b2`). Substitui TTL hardcoded de 30d. Tokens em circulacao nao sao invalidados.
+- **MfaGuard** em apps/api + aplicado em `PATCH /accounts/me` (commit `801ddb0`, 16/16 e2e verde).
+- **Banner MFA** no dashboard de apps/web - recomenda ativacao quando `mfaStatus !== 'verified'` (commit `74688b6`).
+- **Playwright e2e suite basica** para apps/web (commit `ddc56d0`) - 4 testes cobrindo redirect anon, render do form de login, redirect de /dashboard sem sessao, login com creds invalidas.
+- **Sentry** integrado em apps/api (`@sentry/nestjs@10.60.0`) e apps/web (`@sentry/nextjs@10.60.0`) (PR #5). `apps/api/src/instrument.ts` + `apps/web/src/sentry.{client,server,edge}.config.ts` + `withSentryConfig` no `next.config.ts`. Sem DSN: Sentry fica noop (dev/CI safe).
+- **Mobile-first testing** (PR #7): meta viewport em apps/web (`viewport: { width: 'device-width', initialScale: 1, themeColor: '#0f172a' }`), Playwright com 3 projects (chromium + iPhone 13 + Pixel 7). 12/12 passed (3 projects x 4 tests).
+- **Semgrep SAST** (`.github/workflows/semgrep.yml`, PR #8) - Community Edition, 6 rulesets (`p/default`, `p/javascript`, `p/typescript`, `p/owasp-top-ten`, `p/secrets`, `p/security-audit`). NAO bloqueia merge (`continue-on-error: true`). SARIF upload pro GitHub Security tab via `github/codeql-action/upload-sarif@v3`.
+- **3 secrets no repo** (via `gh secret set`): `POSTGRES_PASSWORD`, `POSTGRES_APP_PASSWORD`, `POSTGRES_APP_SYSTEM_PASSWORD` - tiram senhas hardcoded do `ci.yml` (silencia GitGuardian).
+
+### Changed
+
+- **Upgrade de stack completo** (PRs #1-#4 + commits `94d3473..634077c`):
+  - Node 22 → 24 LTS
+  - pnpm 9 → 11
+  - NestJS 10 → 11
+  - Next.js 15 → 16 (Turbopack default; middleware renomeado para `proxy.ts`)
+  - TypeScript 5.6 → 5.9
+  - GitHub Actions: Node 24 runners, pnpm/action-setup v6
+- **CI setup test DB** corrigido em 4 PRs (#1-#4):
+  - Usa `localhost:5432` (port mapping do service container) - evita DNS flaky do `services.postgres`.
+  - `postgres-client` instalado via `apt-get` (ubuntu-latest nao vem com `psql`).
+  - Service `postgres` usa `POSTGRES_USER: postgres` (default bootstrap). Role `app` criado via `CREATE USER ... NOSUPERUSER NOBYPASSRLS` no Setup test DB. Garante que CI espelha prod (RLS real, nao nominal).
+  - 3 secrets (`POSTGRES_PASSWORD`, `POSTGRES_APP_PASSWORD`, `POSTGRES_APP_SYSTEM_PASSWORD`) substituem senhas hardcoded.
+  - `pnpm-workspace.yaml` precisa `allowBuilds: ['@sentry/cli': true]` (pnpm 11 mudou config de build scripts - `onlyBuiltDependencies` foi removido, substituido por `allowBuilds` no `pnpm-workspace.yaml`).
+- `apps/web/next.config.ts`: wrap com `withSentryConfig` (env vars `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` para upload de source maps - opcional).
+- `apps/web/src/middleware.ts` → `apps/web/src/proxy.ts` (rename obrigatorio no Next 16). Conteudo preservado.
+- `apps/web/src/auth.ts` atualizado pra NextAuth v5 beta.31 (peer aceita Next 16).
+
+### Security
+
+- **Code Scanning habilitado** no repo (Settings > Security > Code security analysis > Set up). Sem isso, `codeql-action/upload-sarif@v3` falha com 403.
+- **CodeQL bonus automatico**: ao habilitar Code Scanning, GitHub Actions roda CodeQL Analyze (actions + javascript-typescript) alem do Semgrep. 2 SAST engines rodando por push/PR.
+- **LGPD**: `sendDefaultPii: false` em todos os Sentry configs. IP, UA, cookies NAO sao enviados por padrao.
+
+### Fixed
+
+- **Bootstrap superuser bug**: `POSTGRES_USER: app` na imagem `postgres:18` tornava `app` o bootstrap superuser, e Postgres proibe rebaixa-lo. Workaround: usar `POSTGRES_USER: postgres` + `CREATE USER app NOSUPERUSER NOBYPASSRLS` (commit `ac4d2ae`).
+- **GitGuardian flagged secrets no PR #5** (8 ocorrencias de "Generic Password" no ci.yml). Resolvido movendo as 3 senhas para `gh secret set`.
+- **pnpm 11 build scripts**: `@sentry/cli` precisa ser explicitamente aprovado em `pnpm-workspace.yaml > allowBuilds` (commit `ee0d5ff`).
+- **Next 16 Turbopack exige `import('./foo')` sem `.js`** na `apps/web/src/instrumentation.ts`.
+
+### Deferred to Sprint 2 (EXE-002)
+
+- Recuperacao de senha (e-mail + SMS) com providers.
+- Preview deploy por PR (Neon branch + Vercel/Render).
+
+---
+
 ## [Nao liberado]
-
-### Em andamento
-
-- **Sprint 2 / EXE-002 — Dominio financeiro** (a iniciar apos go/no-go da Sprint 1).
-- **Upgrade de stack 2026-06-23** (6 commits na branch `sprint/001-foundation`, em validacao):
-  - Node 22→24 LTS, pnpm 9→11, NestJS 10→11, Next.js 15→16, next-auth beta.20→beta.31, TypeScript 5.6→5.9.
-
-### Adicionado (Sprint 1.5 — fechamento)
-
-- **TTL de refresh token configuravel (default 12h)** via `SESSION_TTL_HOURS` env. Substitui o TTL hardcoded de 30 dias. 3 arquivos: `packages/infra/src/env.ts`, `apps/api/src/modules/identity/auth/refresh-token.service.ts`, `.env.example`. Tokens em circulacao nao sao invalidados (apenas encolhem ao expirar).
 
 ### Pendente
 
 - Decisoes juridicas sobre LGPD, transferencia internacional, modulo PREMIUM e provedor LLM.
-- DPIA para PREMIUM e dados fora do BR (Sprint 1.5 / 2).
+- DPIA para PREMIUM e dados fora do BR.
 - Subprocessadores formais e revisão jurídica final do modo nominal no PREMIUM.
+
+### Em validacao
+
+- **Sprint 2 / EXE-002 — Dominio financeiro** (a iniciar apos go/no-go da Sprint 1.5).
 
 ### Adicionado (upgrade de stack)
 

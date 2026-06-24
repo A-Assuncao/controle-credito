@@ -2,8 +2,8 @@
 
 SaaS para gestao de emprestimos pessoais no Brasil, feito para **pessoa fisica** credora.
 
-> **Status atual:** planejamento concluido, aguardando autorizacao de implementacao.
-> Fonte da verdade do projeto: [`docs/master-plan.md`](docs/master-plan.md).
+> **Status atual:** Sprint 1 (v1.0.0-foundation) e Sprint 1.5 (v1.1.0-sast) concluidas. Em validacao para Sprint 2 (EXE-002: dominio financeiro — tomadores, contratos, parcelas).
+> Fonte da verdade do projeto: [`docs/master-plan.md`](docs/master-plan.md). Mudancas recentes: [`CHANGELOG.md`](CHANGELOG.md). DoD da Sprint 1: [`docs/sprint-1-done.md`](docs/sprint-1-done.md).
 
 ---
 
@@ -29,12 +29,13 @@ Diferenciais pensados desde o design: **conta pessoal isolada** (1 usuario por c
 ## Onde comecar a ler
 
 1. [`docs/master-plan.md`](docs/master-plan.md) — plano mestre, fonte unica de verdade.
-2. [`docs/architecture.md`](docs/architecture.md) — visao C4 e fluxos criticos (incluindo WhatsApp).
-3. [`docs/security-model.md`](docs/security-model.md) — auth, MFA opcional, RLS, auditoria.
-4. [`docs/financial-engine.md`](docs/financial-engine.md) — invariantes e cenarios dourados.
-5. [`docs/compliance-checklist.md`](docs/compliance-checklist.md) — pareceres juridicos pendentes.
-6. [`docs/sprint-1-plan.md`](docs/sprint-1-plan.md) — plano da Sprint 1 (pronto para `AUTORIZO CODAR`).
-7. [`docs/adr/`](docs/adr/) — decisoes arquiteturais registradas.
+2. [`CHANGELOG.md`](CHANGELOG.md) — historico de versoes (1.0.0-foundation, 1.1.0-sast, etc.).
+3. [`docs/sprint-1-done.md`](docs/sprint-1-done.md) — Definition of Done da Sprint 1 (DoD item-por-item).
+4. [`docs/architecture.md`](docs/architecture.md) — visao C4 e fluxos criticos (incluindo WhatsApp).
+5. [`docs/security-model.md`](docs/security-model.md) — auth, MFA opcional, RLS, auditoria.
+6. [`docs/financial-engine.md`](docs/financial-engine.md) — invariantes e cenarios dourados.
+7. [`docs/compliance-checklist.md`](docs/compliance-checklist.md) — pareceres juridicos pendentes.
+8. [`docs/adr/`](docs/adr/) — decisoes arquiteturais registradas (ADRs 0001-0024+).
 
 ---
 
@@ -59,51 +60,91 @@ Detalhamento em [ADR-0020](docs/adr/0020-tiering-pessoa-fisica.md), [ADR-0019](d
 
 ## Estado operacional
 
-| Item                                          | Status                           | Ultima atualizacao |
-| --------------------------------------------- | -------------------------------- | ------------------ |
-| Planejamento (master-plan)                    | Concluido                        | 2026-04-22         |
-| Documentacao tecnica (v0.2.0)                 | **Concluida**                    | 2026-06-20         |
-| Fundacao conta/IAM/auditoria (EXE-001)        | `EM_ANDAMENTO (preparacao)`      | 2026-06-20         |
-| Contratos + parcelas + recebimentos (EXE-002) | `NAO_INICIADO`                   | —                  |
-| Caixa + projecoes + dashboard (EXE-003)       | `NAO_INICIADO`                   | —                  |
-| Risco + WhatsApp + e-mail (EXE-004)           | `NAO_INICIADO`                   | —                  |
-| Billing SaaS + limites por plano (EXE-005)    | `NAO_INICIADO`                   | —                  |
-| PREMIUM modo seguro (EXE-006)                 | `NAO_INICIADO`                   | —                  |
-| PREMIUM nominal cross-account (EXE-007)       | `BLOQUEADO` (validacao juridica) | —                  |
+| Item                                          | Status                                      | Ultima atualizacao |
+| --------------------------------------------- | ------------------------------------------- | ------------------ |
+| Fundacao conta/IAM/auditoria (EXE-001)        | **`VALIDADO` (v1.0.0-foundation)**          | 2026-06-21         |
+| Fechamento diferidos Sprint 1.5 (CI, Sentry, mobile, SAST, upgrade stack) | **`VALIDADO` (v1.1.0-sast)**               | 2026-06-24         |
+| Contratos + parcelas + recebimentos (EXE-002) | `EM_ANDAMENTO` (pronto para AUTORIZO CODAR) | —                  |
+| Caixa + projecoes + dashboard (EXE-003)       | `NAO_INICIADO`                              | —                  |
+| Risco + WhatsApp + e-mail (EXE-004)           | `NAO_INICIADO`                              | —                  |
+| Billing SaaS + limites por plano (EXE-005)    | `NAO_INICIADO`                              | —                  |
+| PREMIUM modo seguro (EXE-006)                 | `NAO_INICIADO`                              | —                  |
+| PREMIUM nominal cross-account (EXE-007)       | `BLOQUEADO` (validacao juridica pendente)  | —                  |
 
-**Gate atual:** sem `AUTORIZO CODAR`. Nenhum codigo de producao sera escrito sem autorizacao explicita com escopo definido (regra 1 do master-plan).
-
----
-
-## Stack-alvo (decidida em ADR-0001, 0002, 0003, 0004, 0005, 0006, 0007, 0019, 0020)
-
-| Camada          | Tecnologia                                                                      |
-| --------------- | ------------------------------------------------------------------------------- |
-| Backend         | Node.js 22 LTS + TypeScript 5 (strict) + NestJS 10 + TypeORM                    |
-| Frontend        | Next.js 15 (App Router) + TypeScript + Tailwind + shadcn/ui                     |
-| Banco           | PostgreSQL 16 (Neon, region `us-east-1`) com **RLS ativo**                      |
-| Cache + Filas   | Redis (Upstash) + BullMQ                                                        |
-| Auth            | Ory Kratos + Hydra (self-hosted) com MFA TOTP opcional                          |
-| E-mail          | Postmark                                                                        |
-| WhatsApp        | Meta Cloud API (oficial) — canal principal com usuario (notificacoes, comandos) |
-| LLM             | Anthropic Claude (Sonnet 4.6 / Opus 4.8) — apenas no plano Ilimitado            |
-| Billing         | Stripe                                                                          |
-| Observabilidade | OpenTelemetry -> Grafana Cloud + Sentry                                         |
-| Storage         | Cloudflare R2 (S3-compativel)                                                   |
-| CI/CD           | GitHub Actions + Neon preview branches                                          |
-| Monorepo        | pnpm workspaces + Turborepo                                                     |
+**Gate atual:** Sprint 1.5 concluida, aguardando `AUTORIZO CODAR` para Sprint 2 (EXE-002).
 
 ---
 
-## Como contribuir (futuro)
+## Stack (versao real, pos-upgrade 2026-06-24)
 
-> Quando a implementacao iniciar, este README sera expandido com setup de dev, testes e convencoes.
+Stack decidida em [ADR-0001](docs/adr/0001-stack-runtimes.md) a [ADR-0007](docs/adr/0007-monorepo.md), ajustada nos ADRs 0019 (WhatsApp), 0020 (tiering), 0024 (auth). Upgrade completo em 2026-06-23 (Node 22→24, pnpm 9→11, NestJS 10→11, Next 15→16, TypeScript 5.6→5.9). Detalhes em `docs/master-plan.md` §12.6.
 
-Por enquanto:
+| Camada          | Tecnologia                                                                      | Versao         |
+| --------------- | ------------------------------------------------------------------------------- | -------------- |
+| Runtime         | Node.js LTS                                                                     | 24 (Krypton)   |
+| Package manager | pnpm + corepack                                                                 | 11.9.0         |
+| Backend         | NestJS + TypeScript (strict)                                                    | 11.1 / 5.9     |
+| Frontend        | Next.js (App Router, Turbopack default) + TypeScript + Tailwind                 | 16.2 / 5.9     |
+| Auth (frontend) | NextAuth v5 (Auth.js)                                                           | 5.0.0-beta.31  |
+| API HTTP        | Express via `@nestjs/platform-express`                                          | 11.1           |
+| DB driver       | `pg` direto (sem ORM) + 2 pools custom (tenant + system)                        | 8.13           |
+| Banco           | PostgreSQL com **RLS ativo** (FORCE)                                            | 18             |
+| Cache + Filas   | Redis + ioredis                                                                  | 7 / 5.4        |
+| Telemetria      | OpenTelemetry (OTLP/HTTP)                                                       | sdk 0.219      |
+| Error tracking  | Sentry (NestJS + Next.js SDKs)                                                  | 10.60          |
+| Validacao       | zod                                                                             | 3.23           |
+| Lint / format   | ESLint + typescript-eslint + Prettier                                           | 10.5 / 8.62 / 3.x |
+| Build           | tsc + turbo                                                                     | tsc 5.9 / turbo 2.1 |
+| Crypto          | argon2                                                                          | 0.41           |
+| Testes E2E      | Playwright (3 projects: chromium + iPhone 13 + Pixel 7)                         | 1.55           |
+| Testes unit     | vitest + unplugin-swc                                                            | 3.2 / 1.5      |
+| SAST            | Semgrep CE + CodeQL (via GitHub Code Scanning)                                  | 1.x / latest   |
+| Secrets scan    | GitGuardian (integrado no GitHub)                                              | n/a            |
+| CI              | GitHub Actions (Node 24 runners)                                                | ubuntu-latest  |
+| Monorepo        | pnpm workspaces + Turborepo                                                     | 11 / 2.1       |
 
-- Mudancas em **arquitetura** -> primeiro atualizar `docs/master-plan.md`, depois abrir PR.
-- Mudancas em **decisoes registradas** -> novo ADR em `docs/adr/`.
-- Toda entrega `IMPLANTADO` ou `VALIDADO` exige atualizar master-plan + CHANGELOG.
+**Diferencas vs. plano original:**
+- `Auth`: Ory Kratos + Hydra foram **substituidos** por NextAuth v5 (beta.31) + TOTP proprio (decisao em [ADR-0024](docs/adr/0024-auth-nextauth-substitui-kratos.md)). Justificativas: menos peca movel, codigo audita vel, sem subprocessor de identidade.
+- `ORM`: TypeORM foi **substituido** por `pg` direto + 2 pools custom (tenant com RLS, system com BYPASSRLS via role `app_system`).
+- `DB`: PostgreSQL 18 (CI/dev local, no WSL); producao ainda em escolha (Neon ou RDS).
+
+---
+
+## Como contribuir
+
+### Setup local (dev)
+
+```bash
+# Pre-requisitos: Node 24 LTS + pnpm 11 (via corepack) + WSL Ubuntu (Postgres 18 + Redis 7)
+corepack enable
+pnpm install
+pnpm --filter @controle-credito/infra build
+pnpm db:migrate
+pnpm dev   # sobe API (:3001) + Web (:3000) via turbo
+```
+
+> Em Windows: rodar comandos `pnpm` no PowerShell (nao WSL — o `wsl-up.sh` resolve o gotcha do PATH do `node` no WSL).
+
+### Testes
+
+```bash
+pnpm test                    # unit tests (vitest)
+pnpm --filter @controle-credito/api test:e2e  # API e2e (supertest)
+pnpm --filter @controle-credito/web test:e2e  # Web e2e (Playwright, 3 viewports)
+```
+
+### Lint / typecheck
+
+```bash
+pnpm lint
+pnpm typecheck
+```
+
+### Convensoes de commit
+
+- Conventional Commits (configurado via commitlint).
+- Mensagens SEM acento (padrao do projeto).
+- Toda entrega `IMPLANTADO` ou `VALIDADO` exige atualizar `docs/master-plan.md` + `CHANGELOG.md`.
 
 ---
 
