@@ -19,6 +19,8 @@ Plano detalhado em `docs/sprint-3-plan.md`. Marcos:
 
 - **`docs/sprint-3-plan.md`** - plano detalhado da EXE-002 (similar a `docs/sprint-1-plan.md`).
 - **`docs/master-plan.md`** atualizado: EXE-001 → `VALIDADO`, EXE-002 → `EM_ANDAMENTO`.
+- **`packages/domain/`** - motor de cálculo completo (EXE-002.1): productSchema, interest, schedule, penalty, allocátion, earlySettlement + golden tests. 68 testes, 100% cobertura.
+- **`db/migrations/004-009_*.sql`** - 6 migrations do domínio financeiro (EXE-002.2): parties, product_schemas, contracts, installments, payments, payment_allocations. Todas com RLS FORCE + policy de isolamento por account_id.
 
 ---
 
