@@ -104,15 +104,17 @@ jobs:
           echo "Criando Neon branch: ${BRANCH_NAME}"
 
           # API Neon: POST /api/v2/projects/{project_id}/branches
-          # Body: { branch: { name, parent_id } } - parent_id = branch principal.
-          # Para simplificar, criamos sem parent_id (usa main por default).
+          # Body: { branch: { name } } - parent_id eh OMITIDO (nao null!).
+          # Por que omitir: a API Neon usa o branch principal como parent
+          # por default. Enviar parent_id=null quebra o decoder Go com
+          # "unexpected byte 110 'n' at 46" (visto no PR #23, run 28141758250).
           #
           # Por que printf em vez de heredoc: bash dentro de aspas
           # duplas escapa \" mas mantem como string. printf com single
           # quotes escapa corretamente e o %s eh substituido. Tambem
           # evita problemas de indentacao YAML (heredoc com { no inicio
           # quebra actionlint/YAML parser).
-          BODY=$(printf '{"branch":{"name":"%s","parent_id":null}}' "${BRANCH_NAME}")
+          BODY=$(printf '{"branch":{"name":"%s"}}' "${BRANCH_NAME}")
           RESPONSE=$(curl -sS -X POST \
             "https://console.neon.tech/api/v2/projects/${NEON_PROJECT_ID}/branches" \
             -H "Authorization: Bearer ${NEON_API_KEY}" \
