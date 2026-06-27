@@ -10,6 +10,7 @@ import { HttpLoggerMiddleware } from './modules/observability/http-logger.middle
 import { AuthGuard } from './modules/identity/guards/auth.guard.js';
 import { AllExceptionsFilter } from './modules/common/filters/all-exceptions.filter.js';
 import { AuditLoggerInterceptor } from './modules/accounts/audit-logger.interceptor.js';
+import { PartiesModule } from './modules/parties/parties.module.js';
 
 /**
  * Modulo raiz da API.
@@ -19,6 +20,7 @@ import { AuditLoggerInterceptor } from './modules/accounts/audit-logger.intercep
  * - APP_INTERCEPTOR: AuditLoggerInterceptor. Grava mutacoes no audit_log.
  * - AccountContextModule: importa IdentityModule (middleware depende do TokenService).
  * - AccountsModule: GET/PATCH /accounts/me + GET /accounts/me/audit.
+ * - PartiesModule: POST/GET /parties (EXE-002.3b Sprint 3).
  * - ObservabilityModule: inicializa OTel SDK (auto-instrumentation).
  * - HttpLoggerMiddleware: loga cada request com correlationId e durationMs.
  */
@@ -30,6 +32,7 @@ import { AuditLoggerInterceptor } from './modules/accounts/audit-logger.intercep
     AccountContextModule,
     HealthModule,
     AccountsModule,
+    PartiesModule,
   ],
   providers: [
     {

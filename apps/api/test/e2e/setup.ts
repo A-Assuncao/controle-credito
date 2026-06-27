@@ -39,10 +39,10 @@ export async function teardown(): Promise<void> {
 }
 
 export async function truncate(): Promise<void> {
-  // Ordem: audit primeiro (sem FK), depois users, depois accounts.
-  // RESTART IDENTITY zera o bigserial de audit_log.
+  // Ordem: audit primeiro (sem FK), depois parties (FK para accounts), depois
+  // users, depois accounts. RESTART IDENTITY zera o bigserial de audit_log.
   // Limpa tambem o Redis (refresh tokens) para isolar testes.
-  await pool.query('TRUNCATE TABLE audit_log, users, accounts RESTART IDENTITY CASCADE');
+  await pool.query('TRUNCATE TABLE audit_log, parties, users, accounts RESTART IDENTITY CASCADE');
   await redis.flushdb();
 }
 
