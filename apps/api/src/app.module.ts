@@ -11,6 +11,7 @@ import { AuthGuard } from './modules/identity/guards/auth.guard.js';
 import { AllExceptionsFilter } from './modules/common/filters/all-exceptions.filter.js';
 import { AuditLoggerInterceptor } from './modules/accounts/audit-logger.interceptor.js';
 import { PartiesModule } from './modules/parties/parties.module.js';
+import { ProductSchemasModule } from './modules/product-schemas/product-schemas.module.js';
 
 /**
  * Modulo raiz da API.
@@ -21,6 +22,7 @@ import { PartiesModule } from './modules/parties/parties.module.js';
  * - AccountContextModule: importa IdentityModule (middleware depende do TokenService).
  * - AccountsModule: GET/PATCH /accounts/me + GET /accounts/me/audit.
  * - PartiesModule: POST/GET /parties (EXE-002.3b Sprint 3).
+ * - ProductSchemasModule: POST/GET /product-schemas (EXE-002.3b Sprint 3).
  * - ObservabilityModule: inicializa OTel SDK (auto-instrumentation).
  * - HttpLoggerMiddleware: loga cada request com correlationId e durationMs.
  */
@@ -33,6 +35,7 @@ import { PartiesModule } from './modules/parties/parties.module.js';
     HealthModule,
     AccountsModule,
     PartiesModule,
+    ProductSchemasModule,
   ],
   providers: [
     {
