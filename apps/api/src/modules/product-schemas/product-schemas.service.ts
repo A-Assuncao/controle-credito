@@ -4,10 +4,7 @@ import type {
   ListProductSchemasQuery,
   ProductSchemaResource,
 } from '@controle-credito/contracts';
-import {
-  ProductSchemasRepository,
-  type ProductSchemaRow,
-} from './product-schemas.repository.js';
+import { ProductSchemasRepository, type ProductSchemaRow } from './product-schemas.repository.js';
 
 /**
  * Service para product_schemas (EXE-002.3b).
@@ -28,10 +25,7 @@ export class ProductSchemasService {
     return this.toDto(row);
   }
 
-  async list(
-    accountId: string,
-    query: ListProductSchemasQuery,
-  ): Promise<ProductSchemaResource[]> {
+  async list(accountId: string, query: ListProductSchemasQuery): Promise<ProductSchemaResource[]> {
     const rows = await this.repo.list(accountId, query);
     return rows.map((r) => this.toDto(r));
   }

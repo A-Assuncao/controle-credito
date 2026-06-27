@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { withAccountContext } from '@controle-credito/infra';
-import type {
-  ProductSchemaConfig,
-  ProductSchemaStatus,
-} from '@controle-credito/contracts';
+import type { ProductSchemaConfig, ProductSchemaStatus } from '@controle-credito/contracts';
 
 /**
  * Repositorio de product_schemas. Toda query roda dentro do account_id
@@ -104,11 +101,7 @@ export class ProductSchemasRepository {
         ORDER BY created_at DESC
         LIMIT $${p} OFFSET $${p + 1}
       `;
-      const r = await client.query<ProductSchemaRow>(sql, [
-        ...params,
-        query.limit,
-        query.offset,
-      ]);
+      const r = await client.query<ProductSchemaRow>(sql, [...params, query.limit, query.offset]);
       return r.rows;
     });
   }
