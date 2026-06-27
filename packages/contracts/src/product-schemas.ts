@@ -44,15 +44,24 @@ export type InterestParams = z.infer<typeof InterestParamsSchema>;
  * - graceDays: dias de carencia antes de aplicar multa/mora
  */
 export const PenaltyParamsSchema = z.object({
-  fixed: z.string().regex(/^\d+(\.\d+)?$/).optional(),
-  daily: z.string().regex(/^\d+(\.\d+)?$/).optional(),
+  fixed: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/)
+    .optional(),
+  daily: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/)
+    .optional(),
   graceDays: z.number().int().min(0).default(0),
 });
 export type PenaltyParams = z.infer<typeof PenaltyParamsSchema>;
 
 export const EarlySettlementParamsSchema = z.object({
   method: EarlySettlementMethodSchema,
-  deductionRate: z.string().regex(/^\d+(\.\d+)?$/).optional(),
+  deductionRate: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/)
+    .optional(),
 });
 export type EarlySettlementParams = z.infer<typeof EarlySettlementParamsSchema>;
 
